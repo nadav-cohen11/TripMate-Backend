@@ -15,7 +15,7 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     match: /^\S+@\S+\.\S+$/,
   },
-  passwordHash: { type: String, required: true },
+  password: { type: String, required: true },
   birthDate: { type: Date },
   gender: { type: String, enum: ['male', 'female'] },
   languagesSpoken: [{ type: String, lowercase: true, trim: true }],
