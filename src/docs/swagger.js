@@ -14,7 +14,7 @@ const swaggerOptions = Object.freeze({
       },
     ],
   },
-  apis: ['./src/routes/*.js'],
+  apis: ['./src/docs/*.js'],
 });
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);

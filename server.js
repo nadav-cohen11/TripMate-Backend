@@ -4,7 +4,7 @@ import logger from './src/config/logger.js';
 
 dotenv.config({ path: '.env' });
 
-const PORT = process.env.PORT;
+const PORT = process.env.BACKEND_PORT;
 
 app.listen(PORT, () => {
   logger.info(`Server running on http://localhost:${PORT}`);

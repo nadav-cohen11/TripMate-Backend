@@ -58,9 +58,4 @@ const MatchSchema = new Schema({
   timestamps: true,
 });
 
-// MatchSchema.index(
-//   { user1Id: 1, user2Id: 1 },
-//   { unique: true }
-// );
-
-export default mongoose.model('Match', MatchSchema);
+export default mongoose.model('Matches', MatchSchema);

@@ -24,7 +24,6 @@ export const createUser = async (userData) => {
 
     const salt = await bcrypt.genSalt(10);
     userData.password = await bcrypt.hash(userData.password, salt);
-    // delete userData.password;
     const user = new User(userData);
     await user.save();
     logger.info("2")
@@ -54,6 +53,14 @@ export const updateUser = async(userId,userData) => {
 export const getUser = async(userId) => {
   try {
     return await User.findById(userId)
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getAllUsers = async() => {
+  try {
+    return await User.find({});
   } catch (error) {
     throw error
   }

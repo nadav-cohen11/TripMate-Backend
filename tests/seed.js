@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { faker } from '@faker-js/faker';
 import dotenv from 'dotenv';
 import User from '../src/models/user.model.js';
 import Trip from '../src/models/trip.model.js';
@@ -8,140 +9,209 @@ import Review from '../src/models/review.model.js';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI;
+const NUM_USERS = 10;
+const NUM_TRIPS = 100;
+const NUM_REVIEWS = 100;
+const NUM_MATCHES = 30;
+const NUM_CHATS = 20;
 
-const randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
+await mongoose.connect(process.env.MONGO_URI);
+console.log('Connected to DB');
 
-const generateRandomDate = (startDate, endDate) => {
-  const start = new Date(startDate).getTime();
-  const end = new Date(endDate).getTime();
-  return new Date(start + Math.random() * (end - start));
-};
+async function clearCollections() {
+  await Promise.all([
+    User.deleteMany({}),
+    Trip.deleteMany({}),
+    Review.deleteMany({}),
+    Match.deleteMany({}),
+    Chat.deleteMany({}),
+  ]);
+  console.log('Cleared collections');
+}
 
-const generateRandomLocation = () => ({
-  type: 'Point',
-  coordinates: [1,1],
-});
+function getRandomEnum(enumArray) {
+  return faker.helpers.arrayElement(enumArray);
+}
 
-const generateRandomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+function generateLocation() {
+  return {
+    type: 'Point',
+    coordinates: [
+      faker.location.longitude(), 
+      faker.location.latitude()
+    ],    
+  };
+}
 
-const seed = async () => {
-  try {
-    await mongoose.connect(MONGO_URI);
-    console.log('MongoDB connected');
+async function seedUsers() {
+  const users = [];
 
-    await Promise.all([
-      User.deleteMany(),
-      Trip.deleteMany(),
-      Match.deleteMany(),
-      Chat.deleteMany(),
-      Review.deleteMany(),
-    ]);
-    console.log('🧹 Old data cleared');
-
-    const travelStyles = ['budget', 'luxury', 'adventure', 'cultural'];
-    const interestsList = ['hiking', 'culture', 'food', 'nightlife', 'beaches', 'history', 'photography'];
-
-    const languages = ['en', 'fr', 'de', 'es', 'it', 'pt', 'ru', 'zh', 'ja', 'ko']; 
-    const users = [];
-    for (let i = 0; i < 50; i++) {
-      const user = new User({
-        fullName: `User ${i + 1}`,
-        email: `user${i + 1}@example.com`,
-        passwordHash: 'hashedpassword',
-        birthDate: generateRandomDate('1990-01-01', '2004-01-01'),
-        gender: randomItem(['male', 'female']),
-        languagesSpoken: [randomItem(languages), randomItem(languages)],
-        location: generateRandomLocation(),
-        travelPreferences: {
-          destinations: ['City A', 'City B'],
-          travelDates: {
-            start: generateRandomDate('2025-01-01', '2025-12-31'),
-            end: generateRandomDate('2025-01-01', '2025-12-31'),
-          },
-          groupSize: generateRandomNumber(2, 10),
-          ageRange: { min: 20, max: 40 },
-          interests: [randomItem(interestsList), randomItem(interestsList), randomItem(interestsList)],
-          travelStyle: randomItem(travelStyles),
-        },
-        adventureStyle: 'Relaxed',
-        bio: 'A passionate traveler.',
-        photos: ['https://randomuser.me/api/portraits/men/1.jpg'],
-        socialLinks: {
-          instagram: `https://instagram.com/user${i + 1}`,
-        },
-      });
-      users.push(await user.save());
-    }
-
-    console.log(`Created ${users.length} users`);
-
-    const trips = [];
-    for (let i = 0; i < 20; i++) {
-      const host = randomItem(users);
-      const participantIds = users.filter(u => u._id !== host._id).slice(0, 4).map(u => ({
-        userId: u._id,
-        isConfirmed: Math.random() < 0.5,
-      }));
-
-      const trip = new Trip({
-        host: host._id,
-        destination: {
-          country: 'Country A',
-          city: 'City B',
-          location: generateRandomLocation(),
-        },
+  for (let i = 0; i < NUM_USERS; i++) {
+    users.push(new User({
+      fullName: faker.person.fullName(),
+      email: faker.internet.email().toLowerCase(),
+      password: faker.internet.password(),
+      birthDate: faker.date.between({ from: '1980-01-01', to: '2005-01-01' }),
+      gender: getRandomEnum(['male', 'female']),
+      languagesSpoken: faker.helpers.arrayElements(['english', 'spanish', 'french', 'german', 'hebrew'], 2),
+      location: generateLocation(),
+      adventureStyle: getRandomEnum(['Relaxed', 'Exploratory', 'Extreme', 'Photography', 'Other']),
+      bio: faker.lorem.sentence(),
+      photos: Array.from({ length: 3 }, () => faker.image.avatar()),
+      socialLinks: {
+        instagram: `https://instagram.com/${faker.internet.username()}`,
+        facebook: `https://facebook.com/${faker.internet.username()}`
+      },
+      travelPreferences: {
+        destinations: [faker.location.country()],
         travelDates: {
-          start: generateRandomDate('2025-01-01', '2025-12-31'),
-          end: generateRandomDate('2025-01-01', '2025-12-31'),
+          start: faker.date.future(),
+          end: faker.date.future(),
         },
-        groupSize: 5,
-        description: 'An exciting trip.',
-        itinerary: Array.from({ length: 3 }, (_, i) => ({
-          day: i + 1,
-          activities: [
-            {
-              time: `${8 + i}:00`,
-              title: 'Activity ' + (i + 1),
-              description: 'An activity description.',
-              location: 'Location A',
-            },
-          ],
-        })),
-        participants: participantIds,
-        tags: [randomItem(interestsList), randomItem(interestsList), randomItem(interestsList)],
-      });
-
-      trips.push(await trip.save());
-    }
-
-    console.log(`Created ${trips.length} trips`);
-
-    const reviews = [];
-    for (let i = 0; i < 50; i++) {
-      const reviewer = randomItem(users);
-      let reviewee;
-      do {
-        reviewee = randomItem(users);
-      } while (reviewer._id.equals(reviewee._id));
-
-      const review = new Review({
-        reviewerId: reviewer._id,
-        revieweeId: reviewee._id,
-        tripId: randomItem(trips)._id,
-        rating: generateRandomNumber(1, 5),
-        comment: 'A review comment.',
-      });
-      reviews.push(await review.save());
-    }
-
-    console.log(`Created ${reviews.length} reviews`);
-    console.log('✅ Seed completed!');
-    process.exit();
-  } catch (error) {
-    console.error('❌ Error seeding data:', error);
-    process.exit(1);
+        groupSize: faker.number.int({ min: 1, max: 10 }),
+        ageRange: {
+          min: 20,
+          max: 40,
+        },
+        interests: faker.helpers.arrayElements(['hiking', 'food', 'culture', 'beach', 'music'], 3),
+        travelStyle: getRandomEnum(['budget', 'luxury', 'adventure', 'cultural', 'nature', 'social']),
+      }
+    }));
   }
-};
 
-seed();
+  return User.insertMany(users);
+}
+
+async function seedTrips(users) {
+  const trips = [];
+
+  for (let i = 0; i < NUM_TRIPS; i++) {
+    const host = faker.helpers.arrayElement(users);
+
+    trips.push(new Trip({
+      host: host._id,
+      destination: {
+        country: faker.location.country(),
+        city: faker.location.city(),
+        location: generateLocation(),
+      },
+      travelDates: {
+        start: faker.date.future(),
+        end: faker.date.future(),
+      },
+      groupSize: faker.number.int({ min: 2, max: 8 }),
+      description: faker.lorem.paragraph(),
+      itinerary: [
+        {
+          day: 1,
+          activities: [{
+            time: '10:00 AM',
+            title: 'City Tour',
+            description: 'Visit the city center',
+            location: faker.location.city(),
+          }],
+        },
+      ],
+      participants: users.slice(0, 3).map((u) => ({
+        userId: u._id,
+        isConfirmed: faker.datatype.boolean(),
+      })),
+      tags: faker.helpers.arrayElements(['beach', 'hike', 'food', 'culture'], 3),
+    }));
+  }
+
+  return Trip.insertMany(trips);
+}
+
+async function seedReviews(users, trips) {
+  const reviews = [];
+
+  for (let i = 0; i < NUM_REVIEWS; i++) {
+    const reviewer = faker.helpers.arrayElement(users);
+    let reviewee = faker.helpers.arrayElement(users);
+    while (reviewee._id.equals(reviewer._id)) {
+      reviewee = faker.helpers.arrayElement(users);
+    }
+
+    const trip = faker.helpers.arrayElement(trips);
+
+    reviews.push(new Review({
+      reviewerId: reviewer._id,
+      revieweeId: reviewee._id,
+      tripId: trip._id,
+      rating: faker.number.int({ min: 1, max: 5 }),
+      comment: faker.lorem.sentences(2),
+    }));
+  }
+
+  return Review.insertMany(reviews);
+}
+
+async function seedMatches(users, trips) {
+  const matches = [];
+
+  for (let i = 0; i < NUM_MATCHES; i++) {
+    const user1 = faker.helpers.arrayElement(users);
+    let user2 = faker.helpers.arrayElement(users);
+    while (user2._id.equals(user1._id)) {
+      user2 = faker.helpers.arrayElement(users);
+    }
+
+    matches.push(new Match({
+      user1Id: user1._id,
+      user2Id: user2._id,
+      tripId: faker.helpers.arrayElement(trips)._id,
+      status: getRandomEnum(['pending', 'accepted', 'declined']),
+      initiatedBy: faker.datatype.boolean() ? user1._id : user2._id,
+      compatibilityScore: faker.number.int({ min: 50, max: 100 }),
+      locationProximityScore: faker.number.int({ min: 0, max: 100 }),
+      sharedInterestsScore: faker.number.int({ min: 0, max: 100 }),
+      isBlocked: false,
+    }));
+  }
+
+  return Match.insertMany(matches);
+}
+
+async function seedChats(users) {
+  const chats = [];
+
+  for (let i = 0; i < NUM_CHATS; i++) {
+    const participants = faker.helpers.shuffle(users).slice(0, 2);
+    const messages = Array.from({ length: 3 }, () => ({
+      sender: faker.helpers.arrayElement(participants)._id,
+      content: faker.lorem.sentence(),
+      messageType: 'text',
+      sentAt: new Date(),
+      readBy: participants.map(p => p._id),
+    }));
+
+    chats.push(new Chat({
+      isGroupChat: false,
+      participants: participants.map(p => p._id),
+      messages,
+      lastMessageAt: messages[messages.length - 1].sentAt,
+      lastMessagePreview: messages[messages.length - 1].content,
+    }));
+  }
+
+  return Chat.insertMany(chats);
+}
+
+async function main() {
+  await clearCollections();
+
+  const users = await seedUsers();
+  const trips = await seedTrips(users);
+  await seedReviews(users, trips);
+  await seedMatches(users, trips);
+  await seedChats(users);
+
+  console.log('Seed completed.');
+  process.exit();
+}
+
+main().catch(err => {
+  console.error(err);
+  process.exit(1);
+});
