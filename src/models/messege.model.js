@@ -9,6 +9,12 @@ export const MessageSchema = new Schema({
     required: true,
     index: true,
   },
+  receiver: {
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  },
   content: {
     type: String,
     trim: true,
@@ -29,6 +35,6 @@ export const MessageSchema = new Schema({
     type: Types.ObjectId,
     ref: 'User',
   }],
-}, {
-  _id: false,
 });
+
+ export default mongoose.model('Message', MessageSchema);
