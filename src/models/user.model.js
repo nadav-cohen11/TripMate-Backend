@@ -23,7 +23,7 @@ const UserSchema = new mongoose.Schema({
   travelPreferences: TravelPreferencesSchema,
   adventureStyle: {
     type: String,
-    enum: ['Relaxed', 'Exploratory', 'Extreme', 'Photography', 'Other'],
+    enum: ['Relaxed', 'Exploratory', 'Extreme', 'Photography', 'Other'], // remove Other
     default: 'Exploratory',
   },
   bio: { type: String, maxlength: 100 },
