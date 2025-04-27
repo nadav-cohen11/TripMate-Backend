@@ -103,3 +103,24 @@ export const updateUser = async (req, res) => {
     );
   }
 };
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const allUsers = await UserServices.getAllUsers();
+    if (!allUsers) {
+      return sendErrorResponse(
+        res,
+        HTTP.StatusCodes.NOT_FOUND,
+        'Useres not found for update'
+      );
+    }
+    return res.json(allUsers);
+  } catch (error) {
+    return sendErrorResponse(
+      res,
+      HTTP.StatusCodes.BAD_REQUEST,
+      'Error in fetching all users',
+      error
+    );
+  }
+};

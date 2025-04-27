@@ -3,17 +3,17 @@ import Trip from '../models/trip.model.js'
 
 export const createOrAcceptMatch = async (user1Id, user2Id, tripId, scores = {}) => {
   try {
-    const reverse = await Match.findOne({
+    const existingPendingMatch = await Match.findOne({
       user1Id: user2Id,
       user2Id: user1Id,
       tripId,
       status: 'pending',
     });
 
-    if (reverse) {
-      reverse.status = 'accepted';
-      reverse.respondedAt = new Date();
-      await reverse.save();
+    if (existingPendingMatch) {
+      existingPendingMatch.status = 'accepted';
+      existingPendingMatch.respondedAt = new Date();
+      await existingPendingMatch.save();
 
       return await Match.create({
         user1Id,

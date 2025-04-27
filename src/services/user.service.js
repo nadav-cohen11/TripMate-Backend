@@ -60,7 +60,7 @@ export const getUser = async(userId) => {
 
 export const getAllUsers = async() => {
   try {
-    return await User.find({});
+    return await User.find().select('-password');
   } catch (error) {
     throw error
   }
