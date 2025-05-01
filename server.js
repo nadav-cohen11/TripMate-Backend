@@ -5,8 +5,6 @@ dotenv.config({ path: '.env' });
 import http from 'http';
 import { Server } from 'socket.io';
 import * as ChatServices from './src/services/chat.service.js'
-import { getConfirmedMatches } from './src/services/match.service.js';
-import mongoose from 'mongoose';
 
 const PORT = process.env.BACKEND_PORT;
 
@@ -21,33 +19,22 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
   console.log('New user connected');
 
+  socket.on('joinChat', ({chatId}) => {
+    socket.join(chatId)
+    console.log(`User joined chat ${chatId}`);
+  })
+
   socket.on('getChats', async ({ userId }, callback) => {
-    // const userObjectId = new mongoose.Types.ObjectId(userId)
-    // const matches = await getConfirmedMatches(userId)
-    // let chats = []
-    // if (matches) {
-    //   chats = matches.filter((match) => {
-    //     return (
-    //       match.user1Id && match.user2Id
-    //     )
-    //   })
-    // }
-    // chats = chats.map(chat => {
-    //   if (!chat.user1Id.equals(userObjectId)) {
-    //     return chat.user1Id
-    //   }
-    //   return chat.user2Id
-    // })
     const chats = await ChatServices.getChatsByUser(userId);
-    
-    console.log(chats)
-
-    
-
     callback(chats)
   });
 
 
+  socket.on('sendMessage', async ({ chatId, msg }) => {
+    await ChatServices.createMessage(chatId, msg)
+
+    io.to(chatId).emit('messageReceived', msg)
+  })
 
   socket.on('disconnect', () => {
     console.log('user disconnected');

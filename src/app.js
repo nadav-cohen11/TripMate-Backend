@@ -7,6 +7,8 @@ import logger from './config/logger.js';
 import userRoutes from './routes/user.route.js'
 import matchRoutes from './routes/match.route.js';
 import reviewsRoute from './routes/review.route.js'
+import messagesRoutes from './routes/message.route.js'
+
 import * as dotenv from 'dotenv';
 
 dotenv.config({ path: '.env' });
@@ -22,6 +24,8 @@ const init = async () => {
         app.use('/api', userRoutes);
         app.use('/api/matches', matchRoutes)
         app.use('/api/reviews', reviewsRoute)
+        app.use('/api/messages', messagesRoutes)
+
         logger.info('app initialized');
     } catch (error) {
         logger.error('Error during app initialization:', error);

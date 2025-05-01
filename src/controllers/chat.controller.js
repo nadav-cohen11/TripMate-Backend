@@ -4,17 +4,15 @@ import HTTP from '../constants/status.js';
 import sendErrorResponse from '../utils/errorHandler.js';
 
 export const sendMessage = async (req, res) => {
-  const { senderId, receiverId, content } = req.body;
+  const { chatId, senderId, receiverId, content } = req.body;
   try {
-    if (!senderId || !receiverId || !content) {
+    if (!chatId || !senderId || !receiverId || !content) {
       return res.status(HTTP.StatusCodes.BAD_REQUEST).json({ error: 'Missing required fields' });
     }
-    let chat = await ChatServices.findOrCreateChat(senderId, receiverId);
-    const message = await MessageServices.createMessage({
-      chatId: chat._id,
-      sender: senderId,
-      content
-    });
+    // let chat = await ChatServices.findOrCreateChat(senderId, receiverId);
+    
+    await ChatServices.createMessage(chatId, { sender: senderId, receiver: receiverId, content })
+
     return res.status(HTTP.StatusCodes.CREATED).json(message);
   } catch (error) {
     return sendErrorResponse(

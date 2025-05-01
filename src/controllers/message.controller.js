@@ -2,24 +2,24 @@ import * as MessageServices from '../services/message.service.js';
 import HTTP from '../constants/status.js';
 import sendErrorResponse from '../utils/errorHandler.js';
 
-export const saveMessage = async (req, res) => {
-  const { senderId, receiverId, content } = req.body;
-  try {
-    if (!senderId || !receiverId || !content) {
-      return res.status(HTTP.StatusCodes.BAD_REQUEST);
-    }
-    const message = await MessageServices.createMessage({ sender: senderId, receiver: receiverId, content });
+// export const saveMessage = async (req, res) => {
+//   const { senderId, receiverId, content } = req.body;
+//   try {
+//     if (!senderId || !receiverId || !content) {
+//       return res.status(HTTP.StatusCodes.BAD_REQUEST);
+//     }
+//     const message = await MessageServices.createMessage({ sender: senderId, receiver: receiverId, content });
 
-    return res.status(HTTP.StatusCodes.CREATED).json(message);
-  } catch (error) {
-    return sendErrorResponse(
-      res,
-      HTTP.StatusCodes.BAD_REQUEST,
-      'Error in sending message',
-      error
-    );
-  }
-};
+//     return res.status(HTTP.StatusCodes.CREATED).json(message);
+//   } catch (error) {
+//     return sendErrorResponse(
+//       res,
+//       HTTP.StatusCodes.BAD_REQUEST,
+//       'Error in sending message',
+//       error
+//     );
+//   }
+// };
 
 export const getMessage = async (req, res) => {
   try {
