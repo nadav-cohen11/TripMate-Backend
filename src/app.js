@@ -8,6 +8,7 @@ import userRoutes from './routes/user.route.js'
 import matchRoutes from './routes/match.route.js';
 import reviewsRoute from './routes/review.route.js'
 import * as dotenv from 'dotenv';
+
 dotenv.config({ path: '.env' });
 
 const app = express();

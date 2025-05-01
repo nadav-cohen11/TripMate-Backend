@@ -45,10 +45,10 @@ export const createOrAcceptMatch = async (user1Id, user2Id, tripId, scores = {})
 export const getAllMatches = async () => {
   try {
     return await Match.find({})
-      .populate('user1Id', 'name avatar')
-      .populate('user2Id', 'name avatar')
-      .populate('tripId', 'tripName date')
-      .sort({ createdAt: -1 });
+      .populate('user1Id', 'fullName')
+      .populate('user2Id', 'fullName')
+      .populate('tripId', 'travelDates')
+      .sort({ createdAt: -1 })
   } catch (error) {
     throw error;
   }
@@ -74,10 +74,10 @@ export const getConfirmedMatches = async (userId) => {
       status: 'accepted',
       $or: [{ user1Id: userId }, { user2Id: userId }],
     })
-      .populate('user1Id', 'name avatar')
-      .populate('user2Id', 'name avatar')
-      .populate('tripId', 'tripName date')
-      .sort({ matchedAt: -1 });
+      .populate('user1Id', 'fullName')
+      .populate('user2Id', 'fullName')
+      .populate('tripId', 'travelDates')
+      .sort({ matchedAt: -1 })
   } catch (error) {
     throw error;
   }
@@ -105,7 +105,7 @@ export const declineMatch = async (matchId, userId) => {
     }
     if (!match.user2Id.equals(userId)) {
       throw new Error('Unauthorized to decline this match');
-    } 
+    }
     match.status = 'declined';
     match.respondedAt = new Date();
     return await match.save();
