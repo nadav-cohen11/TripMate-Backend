@@ -1,11 +1,10 @@
 import jwt from 'jsonwebtoken';
-import HTTP from '../utils/errorHandler.js';
+import HTTP from '../constants/status.js';
 
 export const verifyToken = (req, res, next) => {
   const token = req.cookies.token;
-
   if (!token) {
-    return res.status(HTTP.StatusCodes.UNAUTHORIZED).json({ message: 'No token provided' });
+    return next(createError(HTTP.StatusCodes.UNAUTHORIZED, 'Access token missing'));
   }
 
   try {
@@ -13,11 +12,6 @@ export const verifyToken = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    return sendErrorResponse(
-      res,
-      HTTP.StatusCodes.BAD_REQUEST,
-      'Error in verifyToken',
-      error
-    );
+    return next(createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid or expired token'));
   }
 };

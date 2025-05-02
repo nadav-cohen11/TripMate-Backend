@@ -9,7 +9,7 @@ const swaggerOptions = Object.freeze({
     },
     servers: [
       {
-        url: 'http://localhost:3000',
+        url: `http://localhost:${process.env.BACKEND_PORT}`,
         description: 'Development Server',
       },
     ],
