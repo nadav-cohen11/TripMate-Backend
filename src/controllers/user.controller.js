@@ -57,7 +57,6 @@ export const updateUser = async (req, res, next) => {
   }
 };
 
-
 export const getAllUsers = async (req, res, next) => {
   try {
     const users = await UserServices.getAllUsers();

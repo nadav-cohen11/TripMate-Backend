@@ -7,10 +7,10 @@
 
 /**
  * @swagger
- * /api/reviews:
+ * /api/reviews/createReview:
  *   post:
  *     summary: Create a new review
- *     description: Allows a user to create a review for another user regarding a trip.
+ *     tags: [Reviews]
  *     requestBody:
  *       required: true
  *       content:
@@ -49,9 +49,10 @@
 
 /**
  * @swagger
- * /api/reviews/{reviewId}:
+ * /api/reviews/userReviews/{reviewId}:
  *   get:
  *     summary: Get a review by ID
+ *     tags: [Reviews]
  *     description: Retrieve a review by its ID.
  *     parameters:
  *       - name: reviewId
@@ -72,6 +73,7 @@
  * /api/reviews/user/{userId}:
  *   get:
  *     summary: Get all reviews for a user
+ *     tags: [Reviews]
  *     description: Retrieve all reviews for a specific user.
  *     parameters:
  *       - name: userId
@@ -91,15 +93,15 @@
  * @swagger
  * /api/reviews/{reviewId}:
  *   put:
- *     summary: Update a review
- *     description: Allows a user to update an existing review.
+ *     summary: Update a review by ID
+ *     tags: [Reviews]
  *     parameters:
- *       - name: reviewId
- *         in: path
+ *       - in: path
+ *         name: reviewId
  *         required: true
- *         description: The ID of the review to update.
  *         schema:
  *           type: string
+ *         description: The ID of the review to update
  *     requestBody:
  *       required: true
  *       content:
@@ -109,16 +111,19 @@
  *             properties:
  *               rating:
  *                 type: integer
- *                 description: New rating to update, between 1 to 5.
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 example: 5
  *               comment:
  *                 type: string
- *                 description: New comment text for the review.
- *                 maxLength: 2000
+ *                 example: "Updated review: excellent experience."
  *     responses:
  *       200:
- *         description: Review successfully updated
+ *         description: Review updated successfully
  *       400:
- *         description: Bad request, invalid data
+ *         description: Invalid input
+ *       404:
+ *         description: Review not found
  */
 
 /**
@@ -126,14 +131,17 @@
  * /api/reviews/{reviewId}:
  *   delete:
  *     summary: Delete a review
- *     description: Allows a user to delete a review by its ID.
- *     parameters:
- *       - name: reviewId
- *         in: path
- *         required: true
- *         description: The ID of the review to delete.
- *         schema:
- *           type: string
+ *     tags: [Reviews]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               rewiewId:
+ *                 type: string
+ *                 example: "660c0e45ec293292e4c2c123"
  *     responses:
  *       200:
  *         description: Review successfully deleted

@@ -9,6 +9,7 @@ import errorHandler from './utils/errorHandler.js';
 import userRoutes from './routes/user.route.js'
 import matchRoutes from './routes/match.route.js';
 import reviewsRoute from './routes/review.route.js'
+import tripRoutes from './routes/trip.route.js'
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env' });
 
@@ -23,8 +24,9 @@ const init = async () => {
 
         app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
         app.use('/api/users', userRoutes);
-        app.use('/api/matches', matchRoutes)
-        app.use('/api/reviews', reviewsRoute)
+        app.use('/api/matches', matchRoutes);
+        app.use('/api/trips', tripRoutes);
+        app.use('/api/reviews', reviewsRoute);
 
         app.use(errorHandler)
 

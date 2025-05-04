@@ -1,5 +1,7 @@
 import Match from '../models/match.model.js';
-import Trip from '../models/trip.model.js'
+import createError from 'http-errors';
+import HTTP from '../constants/status.js';
+import mongoose from 'mongoose';
 
 export const createOrAcceptMatch = async (user1Id, user2Id, tripId, scores = {}) => {
   try {
@@ -27,9 +29,8 @@ export const createOrAcceptMatch = async (user1Id, user2Id, tripId, scores = {})
     }
 
     const existing = await Match.findOne({ user1Id, user2Id, tripId });
-    if (existing) throw new Error('Match already exists');
-
-    return await Match.create({
+    if (existing) throw createError(HTTP.StatusCodes.CONFLICT, 'match already exist');
+    const match = await Match.create({
       user1Id,
       user2Id,
       tripId,
@@ -37,6 +38,7 @@ export const createOrAcceptMatch = async (user1Id, user2Id, tripId, scores = {})
       status: 'pending',
       ...scores,
     });
+    return match;
   } catch (error) {
     throw error;
   }
@@ -44,25 +46,30 @@ export const createOrAcceptMatch = async (user1Id, user2Id, tripId, scores = {})
 
 export const getAllMatches = async () => {
   try {
-    return await Match.find({})
-      .populate('user1Id', 'name avatar')
-      .populate('user2Id', 'name avatar')
-      .populate('tripId', 'tripName date')
+    const matches = await Match.find({})
+      .populate({ path: 'user1Id', select: 'fullName photos' })
+      .populate({ path: 'user2Id', select: 'fullName photos' })
+      .populate({ path: 'tripId', select: 'tripName date' })
       .sort({ createdAt: -1 });
+    return matches;
   } catch (error) {
+    console.error("Failed to fetch matches:", error);
     throw error;
   }
 };
 
+
 export const getPendingReceived = async (userId) => {
   try {
-    return await Match.find({
+    const pendingReceived = await Match.find({
       user2Id: userId,
       status: 'pending',
     })
-      .populate('user1Id', 'name avatar')
-      .populate('tripId', 'tripName date')
+      .populate({ path: 'user1Id', select: 'fullName photos' })
+      .populate({ path: 'tripId', select: 'tripName date' })
       .sort({ createdAt: -1 });
+    if (!pendingReceived) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Pending matches not found')
+    return pendingReceived;
   } catch (error) {
     throw error;
   }
@@ -70,14 +77,16 @@ export const getPendingReceived = async (userId) => {
 
 export const getConfirmedMatches = async (userId) => {
   try {
-    return await Match.find({
+    const confirmedMatches = await Match.find({
       status: 'accepted',
       $or: [{ user1Id: userId }, { user2Id: userId }],
     })
-      .populate('user1Id', 'name avatar')
-      .populate('user2Id', 'name avatar')
-      .populate('tripId', 'tripName date')
-      .sort({ matchedAt: -1 });
+      .populate({ path: 'user1Id', select: 'fullName photos bio gender adventureStyle ' })
+      .populate({ path: 'user2Id', select: 'fullName photos bio gender adventureStyle ' })
+      .populate({ path: 'tripId', select: 'tripName date' })
+      .sort({ respondedAt: -1 });
+    if (!confirmedMatches) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Confirmed matches not found');
+    return confirmedMatches;
   } catch (error) {
     throw error;
   }
@@ -85,13 +94,15 @@ export const getConfirmedMatches = async (userId) => {
 
 export const getPendingSent = async (userId) => {
   try {
-    return await Match.find({
+    const PendingSentMatches = await Match.find({
       status: 'pending',
       $or: [{ user1Id: userId }, { user2Id: userId }],
     })
-      .populate('user2Id', 'name avatar')
-      .populate('tripId', 'tripName date')
+      .populate({ path: 'user2Id', select: 'fullName photos bio gender adventureStyle ' })
+      .populate({ path: 'tripId', select: 'tripName date' })
       .sort({ createdAt: -1 });
+    if (!PendingSentMatches) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Pending sent matches not found');
+    return PendingSentMatches;
   } catch (error) {
     throw error;
   }
@@ -100,15 +111,13 @@ export const getPendingSent = async (userId) => {
 export const declineMatch = async (matchId, userId) => {
   try {
     const match = await Match.findById(matchId);
-    if (!match) {
-      throw new Error('Match not found');
-    }
-    if (!match.user2Id.equals(userId)) {
-      throw new Error('Unauthorized to decline this match');
-    } 
+    if (!match) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    if (!match.user1Id.equals(userObjectId) && !match.user2Id.equals(userObjectId)) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Unauthorized to decline this match'); 
     match.status = 'declined';
     match.respondedAt = new Date();
-    return await match.save();
+    const savedMatch = await match.save();
+    return savedMatch;
   } catch (error) {
     throw error;
   }
@@ -116,13 +125,14 @@ export const declineMatch = async (matchId, userId) => {
 
 export const unmatchUsers = async (user1Id, user2Id, tripId) => {
   try {
-    return await Match.deleteMany({
+    const unMatch = await Match.deleteMany({
       tripId,
       $or: [
-        { user1Id, user2Id },
+        { user1Id: user1Id, user2Id: user2Id },
         { user1Id: user2Id, user2Id: user1Id },
       ],
     });
+    return unMatch;
   } catch (error) {
     throw error;
   }
@@ -131,15 +141,14 @@ export const unmatchUsers = async (user1Id, user2Id, tripId) => {
 export const blockMatch = async (matchId, userId) => {
   try {
     const match = await Match.findById(matchId);
-    if (!match) {
-      throw new Error('Match not found');
-    }
-    if (!match.user1Id.equals(userId) && !match.user2Id.equals(userId)) {
-      throw new Error('Unauthorized to block this match');
-    }
+    if (!match) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    if (!match.user1Id.equals(userObjectId) && !match.user2Id.equals(userObjectId)) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Unauthorized to block this match');
     match.isBlocked = true;
-    return await match.save();
+    const BlockedMatch = await match.save();
+    return BlockedMatch.isBlocked;
   } catch (error) {
     throw error;
   }
 };
+
