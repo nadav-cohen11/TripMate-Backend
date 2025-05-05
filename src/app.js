@@ -8,6 +8,7 @@ import userRoutes from './routes/user.route.js'
 import matchRoutes from './routes/match.route.js';
 import reviewsRoute from './routes/review.route.js'
 import messagesRoutes from './routes/message.route.js'
+import cookieParser from 'cookie-parser';
 
 import * as dotenv from 'dotenv';
 
@@ -20,6 +21,7 @@ const init = async () => {
         await connectDB();
         app.use(cors({ origin: `http://localhost:${process.env.FRONTEND_PORT}`, credentials: true }));
         app.use(express.json());
+        app.use(cookieParser());
         app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
         app.use('/api', userRoutes);
         app.use('/api/matches', matchRoutes)

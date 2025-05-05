@@ -1,5 +1,6 @@
 import express from 'express';
 import * as UserControllers from '../controllers/user.controller.js';
+import { verifyToken } from '../middlewares/auth.js';
 
 const router = express.Router();
 
@@ -9,5 +10,6 @@ router.delete('/deleteUser', UserControllers.deleteUser);
 router.put('/updateUser', UserControllers.updateUser);
 router.post('/login', UserControllers.login);
 router.get('/getAllUsers', UserControllers.getAllUsers);
+router.get('/getUserLoggedIn', verifyToken, UserControllers.getUserLoggedIn)
 
 export default router;

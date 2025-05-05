@@ -3,7 +3,6 @@ import HTTP from '../utils/errorHandler.js';
 
 export const verifyToken = (req, res, next) => {
   const token = req.cookies.token;
-
   if (!token) {
     return res.status(HTTP.StatusCodes.UNAUTHORIZED).json({ message: 'No token provided' });
   }

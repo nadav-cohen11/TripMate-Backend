@@ -1,12 +1,17 @@
 import Chat from '../models/chat.model.js';
 import Message from '../models/messege.model.js';
 
-export const createMessage = async (chatId, messageData) => {
+export const createMessage = async (room, sender, msg) => {
   try {
-    const message = await Message.create(messageData);
+    const message = await Message.create({
+      chatId: room,
+      content: msg.content,
+      sender: sender
+    });
+
     await Chat.findByIdAndUpdate(
-      chatId,
-      { $push: { messages: message} },
+      room,
+      { $push: { messages: message } },
       { new: true }
     );
     return message;
@@ -27,7 +32,7 @@ export const findOrCreateChat = async (userA, userB) => {
 
 export const getChatsByUser = async (userId) => {
   return Chat.find({ participants: userId })
-    .populate('participants', 'fullName _id');
+    .populate('participants', 'fullName _id')
 };
 
 

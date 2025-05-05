@@ -61,6 +61,20 @@ export const getUser = async (req, res) => {
   }
 };
 
+export const getUserLoggedIn = async (req, res) => {
+  try {
+    const userId = req.user.id
+    return res.status(HTTP.StatusCodes.OK).json(userId);
+  } catch (error) {
+    return sendErrorResponse(
+      res,
+      HTTP.StatusCodes.BAD_REQUEST,
+      'Error in getUser',
+      error
+    );
+  }
+};
+
 export const deleteUser = async (req, res) => {
   try {
     const deleted = await UserServices.deleteUser(req.body.userId);
