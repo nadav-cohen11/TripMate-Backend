@@ -4,8 +4,9 @@ import * as TripController from '../controllers/trip.controller.js';
 const router = express.Router();
 
 router.post('/createTrip', TripController.createTrip);
-router.get('/getTrip', TripController.getTrip);
-router.put('/updateTrip', TripController.updateTrip);
-router.delete('/deleteTrip', TripController.deleteTrip);
+router.get('/:tripId', TripController.getTrip);
+router.put('/:tripId', TripController.updateTrip);
+router.delete('/:tripId', TripController.deleteTrip);
+router.get('/', TripController.getAllTrips);
 
 export default router;

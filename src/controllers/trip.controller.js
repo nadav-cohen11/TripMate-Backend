@@ -1,93 +1,50 @@
 import * as TripService from '../services/trip.service.js';
 import HTTP from '../constants/status.js';
-import sendErrorResponse from '../utils/errorHandler.js'
 
-export const createTrip = async (req, res) => {
+export const createTrip = async (req, res, next) => {
   try {
     const trip = await TripService.createTrip(req.body);
-    return res.status(HTTP.StatusCodes.CREATED).json(trip);
+    res.status(HTTP.StatusCodes.CREATED).json(trip);
   } catch (error) {
-    return sendErrorResponse(
-      res,
-      HTTP.StatusCodes.BAD_REQUEST,
-      'Error creating trip',
-      error);
+    next(error);
   }
 };
 
-export const getTrip = async (req, res) => {
-  const { tripId } = req.query
+export const getTrip = async (req, res, next) => {
   try {
+    const { tripId } = req.params;
     const trip = await TripService.getTrip(tripId);
-    if (!trip) {
-      return sendErrorResponse(
-        res,
-        HTTP.StatusCodes.NOT_FOUND,
-        'Trip not found'
-      );
-    }
-    return res.status(HTTP.StatusCodes.OK).json(trip);
+    res.status(HTTP.StatusCodes.OK).json(trip);
   } catch (error) {
-    return sendErrorResponse(
-      res,
-      HTTP.StatusCodes.BAD_REQUEST,
-      'Error fetching trip',
-      error);
+    next(error);
   }
 };
 
-export const updateTrip = async (req, res) => {
-  const { tripId, tripData } = req.body
+export const updateTrip = async (req, res, next) => {
   try {
-    const trip = await TripService.updateTrip(tripId, tripData);
-    if (!trip) {
-      return sendErrorResponse(
-        res,
-        HTTP.StatusCodes.NOT_FOUND,
-        'Trip not found for update');
-    }
-    return res.status(HTTP.StatusCodes.OK).json(trip);
+    const { tripId } = req.params;
+    const tripData = req.body;
+    const updated = await TripService.updateTrip(tripId, tripData);
+    res.status(HTTP.StatusCodes.OK).json(updated);
   } catch (error) {
-    return sendErrorResponse(
-      res,
-      HTTP.StatusCodes.BAD_REQUEST,
-      'Error updating trip',
-      error
-    );
+    next(error);
   }
 };
 
-export const deleteTrip = async (req, res) => {
+export const deleteTrip = async (req, res, next) => {
   try {
-    const deleted = await TripService.deleteTrip(req.body.tripId);
-    if (!deleted) {
-      return sendErrorResponse(
-        res,
-        HTTP.StatusCodes.NOT_FOUND,
-        'Trip not found for deletion'
-      );
-    }
-    return res.status(HTTP.StatusCodes.OK).json({ message: 'Trip deleted' });
+    await TripService.deleteTrip(req.body.tripId);
+    res.status(HTTP.StatusCodes.NO_CONTENT).send();
   } catch (error) {
-    return sendErrorResponse(
-      res,
-      HTTP.StatusCodes.BAD_REQUEST,
-      'Error in deleteTrip',
-      error
-    );
+    next(error);
   }
 };
 
-export const getAllTrips = async (req, res) => {
+export const getAllTrips = async (req, res, next) => {
   try {
-    const trips = await TripService.getAllTrips(req.query);
-    return res.status(HTTP.StatusCodes.OK).json({ trips });
+    const trips = await TripService.getAllTrips();
+    res.status(HTTP.StatusCodes.OK).json(trips);
   } catch (error) {
-    return sendErrorResponse(
-      res,
-      HTTP.StatusCodes.BAD_REQUEST,
-      'Error in getAllTrips',
-      error
-    );
+    next(error);
   }
 };

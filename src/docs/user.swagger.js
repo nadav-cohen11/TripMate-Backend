@@ -7,7 +7,7 @@
 
 /**
  * @swagger
- * /api/register:
+ * /api/users/register:
  *   post:
  *     summary: Register a new user
  *     description: Registers a new user with the provided data.
@@ -38,7 +38,7 @@
 
 /**
  * @swagger
- * /api/getUser/{userId}:
+ * /api/users/{userId}:
  *   get:
  *     summary: Get a user by ID
  *     description: Fetches the user data based on the provided user ID.
@@ -61,7 +61,7 @@
 
 /**
  * @swagger
- * /api/getAllUsers:
+ * /api/users/:
  *   get:
  *     summary: Get all users
  *     description: Retrieves all users.
@@ -75,7 +75,7 @@
 
 /**
  * @swagger
- * /api/deleteUser:
+ * /api/users/{userId}:
  *   delete:
  *     summary: Delete a user by ID
  *     description: Deletes a user based on the provided user ID.
@@ -100,7 +100,7 @@
 
 /**
  * @swagger
- * /api/updateUser:
+ * /api/users/{userId}:
  *   put:
  *     summary: Update user data
  *     description: Updates the user's information with the provided data.
@@ -128,7 +128,7 @@
 
 /**
  * @swagger
- * /api/login:
+ * /api/users/login:
  *   post:
  *     summary: User login
  *     description: Authenticates a user with the provided email and password.
