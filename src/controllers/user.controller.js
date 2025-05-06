@@ -15,11 +15,11 @@ export const login = async (req, res) => {
 
     return res
       .cookie('token', token, {
-        httpOnly: true,
-        sameSite: 'strict',
-        maxAge: 3600000,
+      httpOnly: true,
+      sameSite: 'strict',
+      maxAge: 60000, // 1 minute in milliseconds
       })
-      .sendStatus(HTTP.StatusCodes.OK)
+      .json(user.id);
   } catch (error) {
     return sendErrorResponse(res, HTTP.StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to login');
   }

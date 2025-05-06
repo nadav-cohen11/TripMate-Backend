@@ -26,7 +26,6 @@ export const createUser = async (userData) => {
     userData.password = await bcrypt.hash(userData.password, salt);
     const user = new User(userData);
     await user.save();
-    logger.info("2")
 
     return user;
   } catch (error) {

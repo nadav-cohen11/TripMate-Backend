@@ -22,7 +22,8 @@ export const createMessage = async (room, sender, msg) => {
 
 export const findOrCreateChat = async (userA, userB) => {
   let chat = await Chat.findOne({
-    participants: { $all: [userA, userB], $size: 2 }
+    participants: { $all: [userA, userB], $size: 2 },
+    isGroupChat:false
   });
   if (!chat) {
     chat = await Chat.create({ participants: [userA, userB] });
