@@ -12,6 +12,6 @@ router.post('/decline/:matchId', matchController.decline);
 router.post('/unmatch', verifyToken, matchController.unmatch);
 router.post('/block/:matchId', matchController.block);
 router.get('/all', matchController.getAllMatches)
-router.get('/home/NonMatchedUsers', verifyToken, matchController.getNonMatchedUsers) // Add to Swagger
+router.get('/home/NonMatchedUsers', verifyToken, matchController.getNonMatchedUsers)
 
 export default router;
