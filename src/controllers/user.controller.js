@@ -7,15 +7,14 @@ export const login = async (req, res, next) => {
     const { email, password } = req.body;
     const user = await UserServices.login(email, password);
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.cookie('token', token, {
       httpOnly: true,
       secure: false,       
       sameSite: 'strict',
       maxAge: 3600000, 
     });
-    res.status(HTTP.StatusCodes.OK).json({ message: 'Login successful', user: user.fullName });
+    res.status(HTTP.StatusCodes.OK).json({ message: 'Login successful',id: user.id });
   } catch (error) {
     next(error);
   }
@@ -24,11 +23,20 @@ export const login = async (req, res, next) => {
 export const register = async (req, res, next) => {
   try {
     const user = await UserServices.createUser(req.body);
-    res.status(HTTP.StatusCodes.CREATED).json(user.email);
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+      maxAge: 3600000,
+    });
+    res.status(HTTP.StatusCodes.CREATED).json({ message: 'Registration successful', id: user.id });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
+
 
 export const getUser = async (req, res, next) => {
   try {
