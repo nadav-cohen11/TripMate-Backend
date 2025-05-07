@@ -154,8 +154,15 @@ export const getNonMatchedUsers = async (userId) => {
       $or: [{ user1Id: userId }, { user2Id: userId }],
     }).distinct('user1Id user2Id');
 
+    const pendingSentUserIds = await Match.find({
+      user1Id: userId,
+      status: 'pending',
+    }).distinct('user2Id');
+
+    const excludedUserIds = matchedUserIds.concat(pendingSentUserIds, userId);
+
     const nonMatchedUsers = await User.find({
-      _id: { $nin: matchedUserIds.concat(userId) },
+      _id: { $nin: excludedUserIds },
     }).select('fullName photos bio gender adventureStyle');
     
     return nonMatchedUsers;
