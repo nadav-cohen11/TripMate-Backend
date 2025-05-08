@@ -1,12 +1,17 @@
 import mongoose from 'mongoose';
 import { MessageSchema } from './messege.model.js';
 
-const { Schema,Types } = mongoose;
+const { Schema, Types } = mongoose;
 
 const ChatSchema = new Schema({
   isGroupChat: {
     type: Boolean,
     default: false,
+  },
+  tripId: {
+    type: Types.ObjectId,
+    ref: 'Trip',
+    required: false,
   },
   chatName: {
     type: String,
@@ -34,6 +39,7 @@ const ChatSchema = new Schema({
     type: Boolean,
     default: false,
   },
+
 }, {
   timestamps: true,
 });

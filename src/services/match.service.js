@@ -71,6 +71,7 @@ export const getPendingReceived = async (userId) => {
 export const getConfirmedMatches = async (userId) => {
   try {
     return await Match.find({
+      isBlocked:false,
       status: 'accepted',
       $or: [{ user1Id: userId }, { user2Id: userId }],
     })
@@ -128,14 +129,16 @@ export const unmatchUsers = async (user1Id, user2Id, tripId) => {
   }
 };
 
-export const blockMatch = async (matchId, userId) => {
+export const blockMatch = async (user1Id, user2Id) => {
   try {
-    const match = await Match.findById(matchId);
+    const match = await Match.findOne({
+      $or: [
+        { user1Id, user2Id },
+        { user1Id: user2Id, user2Id: user1Id },
+      ],
+    });
     if (!match) {
       throw new Error('Match not found');
-    }
-    if (!match.user1Id.equals(userId) && !match.user2Id.equals(userId)) {
-      throw new Error('Unauthorized to block this match');
     }
     match.isBlocked = true;
     return await match.save();
