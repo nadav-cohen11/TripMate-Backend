@@ -1,26 +1,24 @@
 import Match from '../models/match.model.js';
 import createError from 'http-errors';
 import HTTP from '../constants/status.js';
-import mongoose from 'mongoose';
+import User from '../models/user.model.js';
 
-export const createOrAcceptMatch = async (user1Id, user2Id, tripId, scores = {}) => {
+export const createOrAcceptMatch = async (user1Id, user2Id, scores = {}) => {
   try {
     const existingPendingMatch = await Match.findOne({
       user1Id: user2Id,
       user2Id: user1Id,
-      tripId,
       status: 'pending',
     });
 
     if (existingPendingMatch) {
       existingPendingMatch.status = 'accepted';
-      existingPendingMatch.respondedAt = new Date();
+      existingPendingMatch.matchedAt = new Date();
       await existingPendingMatch.save();
 
       return await Match.create({
         user1Id,
         user2Id,
-        tripId,
         initiatedBy: user1Id,
         status: 'accepted',
         respondedAt: new Date(),
@@ -28,12 +26,11 @@ export const createOrAcceptMatch = async (user1Id, user2Id, tripId, scores = {})
       });
     }
 
-    const existing = await Match.findOne({ user1Id, user2Id, tripId });
+    const existing = await Match.findOne({ user1Id, user2Id });
     if (existing) throw createError(HTTP.StatusCodes.CONFLICT, 'match already exist');
     const match = await Match.create({
       user1Id,
       user2Id,
-      tripId,
       initiatedBy: user1Id,
       status: 'pending',
       ...scores,
@@ -51,9 +48,9 @@ export const getAllMatches = async () => {
       .populate({ path: 'user2Id', select: 'fullName photos' })
       .populate({ path: 'tripId', select: 'tripName date' })
       .sort({ createdAt: -1 });
+    if (!matches) throw createError(HTTP.StatusCodes.CONFLICT, 'No matches found');
     return matches;
   } catch (error) {
-    console.error("Failed to fetch matches:", error);
     throw error;
   }
 };
@@ -123,10 +120,9 @@ export const declineMatch = async (matchId, userId) => {
   }
 };
 
-export const unmatchUsers = async (user1Id, user2Id, tripId) => {
+export const unmatchUsers = async (user1Id, user2Id) => {
   try {
     const unMatch = await Match.deleteMany({
-      tripId,
       $or: [
         { user1Id: user1Id, user2Id: user2Id },
         { user1Id: user2Id, user2Id: user1Id },
@@ -152,3 +148,25 @@ export const blockMatch = async (matchId, userId) => {
   }
 };
 
+export const getNonMatchedUsers = async (userId) => {
+  try {
+    const matchedUserIds = await Match.find({
+      $or: [{ user1Id: userId }, { user2Id: userId }],
+    }).distinct('user1Id user2Id');
+
+    const pendingSentUserIds = await Match.find({
+      user1Id: userId,
+      status: 'pending',
+    }).distinct('user2Id');
+
+    const excludedUserIds = matchedUserIds.concat(pendingSentUserIds, userId);
+
+    const nonMatchedUsers = await User.find({
+      _id: { $nin: excludedUserIds },
+    }).select('-password -isDeleted -createdAt -updatedAt');
+    if (nonMatchedUsers.length === 0) throw createError(HTTP.StatusCodes.NOT_FOUND, 'No users in your area');
+    return nonMatchedUsers;
+  } catch (error) {
+    throw error;
+  }
+};

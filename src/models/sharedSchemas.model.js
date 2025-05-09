@@ -30,6 +30,8 @@ export const GeoLocationSchema = new Schema({
     type: [Number],
     required: true,
   },
+  country: { type: String },
+  city: { type: String },
 }, { _id: false });
 
 export const SocialLinksSchema = new Schema({

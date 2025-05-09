@@ -9,9 +9,9 @@ export const MessageSchema = new Schema({
     required: true,
     index: true,
   },
-  receiver: {
+  chatId: {
     type: Types.ObjectId,
-    ref: 'User',
+    ref: 'Chat',
     required: true,
     index: true,
   },
