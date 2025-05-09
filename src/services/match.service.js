@@ -163,8 +163,8 @@ export const getNonMatchedUsers = async (userId) => {
 
     const nonMatchedUsers = await User.find({
       _id: { $nin: excludedUserIds },
-    }).select('fullName photos bio gender adventureStyle');
-    
+    }).select('-password -isDeleted -createdAt -updatedAt');
+    if (nonMatchedUsers.length === 0) throw createError(HTTP.StatusCodes.NOT_FOUND, 'No users in your area');
     return nonMatchedUsers;
   } catch (error) {
     throw error;
