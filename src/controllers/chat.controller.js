@@ -9,11 +9,10 @@ export const sendMessage = async (req, res) => {
     if (!chatId || !senderId || !receiverId || !content) {
       return res.status(HTTP.StatusCodes.BAD_REQUEST).json({ error: 'Missing required fields' });
     }
-    // let chat = await ChatServices.findOrCreateChat(senderId, receiverId);
-    
-    await ChatServices.createMessage(chatId, { sender: senderId, receiver: receiverId, content })
 
-    return res.status(HTTP.StatusCodes.CREATED).json(message);
+    const msg = await ChatServices.createMessage(chatId, { sender: senderId, receiver: receiverId, content })
+
+    return res.status(HTTP.StatusCodes.CREATED).json(msg);
   } catch (error) {
     return sendErrorResponse(
       res,

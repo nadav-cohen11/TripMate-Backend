@@ -4,8 +4,8 @@ import connectDB from './config/db.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './docs/swagger.js';
 import logger from './config/logger.js';
-import userRoutes from './routes/user.route.js'
-import matchRoutes from './routes/match.route.js';
+import usersRoutes from './routes/user.route.js'
+import matchesRoutes from './routes/match.route.js';
 import reviewsRoute from './routes/review.route.js'
 import messagesRoutes from './routes/message.route.js'
 import cookieParser from 'cookie-parser';
@@ -23,8 +23,8 @@ const init = async () => {
         app.use(express.json());
         app.use(cookieParser());
         app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-        app.use('/api', userRoutes);
-        app.use('/api/matches', matchRoutes)
+        app.use('/api', usersRoutes);
+        app.use('/api/matches', matchesRoutes)
         app.use('/api/reviews', reviewsRoute)
         app.use('/api/messages', messagesRoutes)
 

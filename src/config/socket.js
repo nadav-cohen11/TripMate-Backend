@@ -1,4 +1,3 @@
-
 import { Server } from 'socket.io';
 import * as ChatServices from '../services/chat.service.js';
 import * as MatchServices from '../services/match.service.js';
@@ -15,88 +14,153 @@ export const initSocket = (server) => {
 
   io.on('connection', (socket) => {
     socket.on('setup', (userId) => {
-      onlineUsers.set(userId, socket.id);
-      console.log(`User ${userId} connected with socket ${socket.id}`);
+      try {
+        onlineUsers.set(userId, socket.id);
+        console.log(`User ${userId} connected with socket ${socket.id}`);
+      } catch (err) {
+        console.error('Error in setup:', err);
+      }
     });
 
     socket.on('joinRoom', ({ chatId }) => {
-      socket.join(chatId)
-      console.log(`User joined chat ${chatId}`);
+      try {
+        socket.join(chatId)
+        console.log(`User joined chat ${chatId}`);
+      } catch (err) {
+        console.error('Error in joinRoom:', err);
+      }
     })
 
     socket.on('getChats', async ({ userId }, callback) => {
-      const chats = await ChatServices.getChatsByUser(userId);
-      callback(chats)
+      try {
+        const chats = await ChatServices.getChatsByUser(userId);
+        callback(chats)
+      } catch (err) {
+        console.error('Error in getChats:', err);
+        callback([]);
+      }
     });
 
     socket.on('getConfirmedMatchesByUserId', async ({ userId }, callback) => {
-      const matches = await MatchServices.getConfirmedMatches(userId)
-      callback(matches)
+      try {
+        const matches = await MatchServices.getConfirmedMatches(userId)
+        callback(matches)
+      } catch (err) {
+        console.error('Error in getConfirmedMatchesByUserId:', err);
+        callback([]);
+      }
     })
 
     socket.on('addNewChat', async ({ user1Id, user2Id }) => {
-      const chat = await ChatServices.findOrCreateChat(user1Id, user2Id);
-      [user1Id, user2Id].forEach(async (userId) => {
-        const socketId = onlineUsers.get(userId.toString());
-        if (socketId) {
-          const chats = await ChatServices.getChatsByUser(userId)
-          io.to(socketId).emit('newChatCreated', { chats });
-        }
-      });
+      try {
+        const chat = await ChatServices.findOrCreateChat(user1Id, user2Id);
+        [user1Id, user2Id].forEach(async (userId) => {
+          try {
+            const socketId = onlineUsers.get(userId.toString());
+            if (socketId) {
+              const chats = await ChatServices.getChatsByUser(userId)
+              io.to(socketId).emit('newChatCreated', { chats });
+            }
+          } catch (err) {
+            console.error('Error in addNewChat (inner):', err);
+          }
+        });
+      } catch (err) {
+        console.error('Error in addNewChat:', err);
+      }
     })
 
     socket.on('sendMessage', async ({ room, sender, msg }) => {
-      const message = await ChatServices.createMessage(room, sender, msg)
-      const chat = await ChatServices.getChat(room)
-      await ChatServices.updateLastMessage(room, msg.content)
+      try {
+        const message = await ChatServices.createMessage(room, sender, msg)
+        const chat = await ChatServices.getChat(room)
+        await ChatServices.updateLastMessage(room, msg.content)
 
-      chat.participants.forEach((p) => {
-        const socketId = onlineUsers.get(p._id.toString());
-        if (socketId) {
-          io.sockets.sockets.get(socketId)?.join(room);
-        }
-      });
+        chat.participants.forEach((p) => {
+          try {
+            const socketId = onlineUsers.get(p._id.toString());
+            if (socketId) {
+              io.sockets.sockets.get(socketId)?.join(room);
+            }
+          } catch (err) {
+            console.error('Error in sendMessage (inner):', err);
+          }
+        });
 
-      io.to(room).emit('messageReceived', message)
+        io.to(room).emit('messageReceived', message)
+      } catch (err) {
+        console.error('Error in sendMessage:', err);
+      }
     })
 
     socket.on('createTrip', async ({ newTrip }, callback) => {
-      const { participants, chatName } = newTrip
-      const trip = await TripServices.createTrip(newTrip)
-      const chat = await ChatServices.createGroupChat(participants, chatName, trip._id)
+      try {
+        const { participants, chatName } = newTrip
+        const trip = await TripServices.createTrip(newTrip)
+        const chat = await ChatServices.createGroupChat(participants, chatName, trip._id)
 
-      participants.forEach(async (p) => {
-        const socketId = onlineUsers.get(p._id.toString());
-        const chats = await ChatServices.getChatsByUser(p._id)
-        if (socketId) {
-          io.to(socketId).emit('newTripCreated', { chats });
-        }
-      });
-      callback({ chat })
+        participants.forEach(async (p) => {
+          try {
+            const socketId = onlineUsers.get(p._id.toString());
+            const chats = await ChatServices.getChatsByUser(p._id)
+            if (socketId) {
+              io.to(socketId).emit('newTripCreated', { chats });
+            }
+          } catch (err) {
+            console.error('Error in createTrip (inner):', err);
+          }
+        });
+        callback({ chat })
+      } catch (err) {
+        console.error('Error in createTrip:', err);
+        callback({ chat: null });
+      }
     })
 
-
     socket.on('getTrip', async ({ tripId }, callback) => {
-      const trip = await TripServices.getTrip(tripId);
-      callback(trip);
+      try {
+        const trip = await TripServices.getTrip(tripId);
+        callback(trip);
+      } catch (err) {
+        console.error('Error in getTrip:', err);
+        callback(null);
+      }
     });
 
     socket.on('blockUser', async ({ chatId, user1Id, user2Id }) => {
-      const chat = await ChatServices.archiveChat(chatId)
-      await MatchServices.blockMatch(user1Id, user2Id)
-      const socketId = onlineUsers.get(user2Id.toString());
-      if (socketId) {
-        io.to(socketId).emit('gotBlocked', { userId: user1Id, chat });
+      try {
+        const chat = await ChatServices.archiveChat(chatId)
+        await MatchServices.blockMatch(user1Id, user2Id)
+        const socketId = onlineUsers.get(user2Id.toString());
+        if (socketId) {
+          io.to(socketId).emit('gotBlocked', { userId: user1Id, chat });
+        }
+      } catch (err) {
+        console.error('Error in blockUser:', err);
       }
     })
 
     socket.on('leaveTrip', async ({ tripId, chatId, userId }) => {
-      await ChatServices.deleteUserFromGroup(chatId, userId)
-      await TripServices.unactiveUserFromTrip(tripId, userId)
+      try {
+        await ChatServices.deleteUserFromGroup(chatId, userId)
+        await TripServices.unactiveUserFromTrip(tripId, userId)
+      } catch (err) {
+        console.error('Error in leaveTrip:', err);
+      }
     })
 
     socket.on('disconnect', () => {
-      console.log('user disconnected');
+      try {
+        for (const [userId, socketId] of onlineUsers.entries()) {
+          if (socketId === socket.id) {
+            onlineUsers.delete(userId);
+            console.log(`User ${userId} disconnected and removed from onlineUsers`);
+            break;
+          }
+        }
+      } catch (err) {
+        console.error('Error in disconnect:', err);
+      }
     });
   });
 
