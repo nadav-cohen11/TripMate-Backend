@@ -19,7 +19,7 @@ const app = express();
 const init = async () => {
     try {
         await connectDB();
-        app.use(cors({ origin: `http://localhost:${process.env.FRONTEND_PORT}`, credentials: true }));
+        app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
         app.use(express.json());
         app.use(cookieParser());
         app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
