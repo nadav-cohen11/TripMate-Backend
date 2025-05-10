@@ -162,7 +162,7 @@ export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters = 100
     const excludedUserIds = [...new Set([...matchedUserIds, ...pendingSentUserIds, userId])];
   
     const currentUserLocation = await User.findById( userId );
-    if (!currentUserLocation) throw createError(HTTP.NOT_FOUND, 'User location not found');
+    if (!currentUserLocation) throw createError(HTTP.StatusCodes.NOT_FOUND, 'User location not found');
 
     const nearbyUserLocations = await User.find({
       userId: { $nin: excludedUserIds },
