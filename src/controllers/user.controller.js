@@ -4,8 +4,8 @@ import jwt from 'jsonwebtoken';
 
 export const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-    const user = await UserServices.login(email, password);
+    const { email, password, location } = req.body;
+    const user = await UserServices.login(email, password, location);
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.cookie('token', token, {
@@ -73,3 +73,27 @@ export const getAllUsers = async (req, res, next) => {
     next(error);
   }
 };
+
+export const updateLocation = async (req, res, next) => {
+  try {
+    const { latitude, longitude } = req.body;
+    if (!latitude || !longitude) {
+      return res.status(HTTP.StatusCodes.OK).json({ message: 'Missing coordinates' });
+    }
+    await UserServices.updateUserLocation(req.user.id, latitude, longitude);
+    res.status(HTTP.OK).json({ message: 'Location updated' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUserLocation = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const userLocation = await UserServices.getUserCordinates(userId);
+    res.status(HTTP.StatusCodes.OK).json(userLocation);
+  } catch (error) {
+    next(error);
+  }
+};
+

@@ -70,7 +70,7 @@
 
 /**
  * @swagger
- * /api/reviews/user/{userId}:
+ * /api/reviews/userReviews/{userId}:
  *   get:
  *     summary: Get all reviews for a user
  *     tags: [Reviews]
