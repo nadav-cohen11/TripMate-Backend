@@ -100,6 +100,16 @@ export const getUserCordinates = async (userId) => {
     if (!userLocation) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Location not found');
     return userLocation;
   } catch (error) {
-    throw error
+    throw error;
   }
 }
+
+export const getUsersLocations = async () => {
+  try {
+    const userLocation = await User.find({ location: { $exists: true } }).select('location.coordinates photos fullName')
+    if (!userLocation) throw createError(HTTP.StatusCodes.NOT_FOUND, 'users not found');
+    return userLocation;
+  } catch (error) {
+    throw error;
+  }
+};

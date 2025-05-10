@@ -11,5 +11,6 @@ router.put('/:userId',verifyToken, userController.updateUser);
 router.delete('/:userId', userController.deleteUser);
 router.get('/', userController.getAllUsers);
 router.get('/location', verifyToken, userController.getUserLocation);
+router.get('/usersLocations', userController.getUserLocations);
 
 export default router;

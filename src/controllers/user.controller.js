@@ -97,3 +97,11 @@ export const getUserLocation = async (req, res, next) => {
   }
 };
 
+export const getUserLocations = async (req, res, next) => {
+  try {
+    const users = await UserServices.getUsersLocations();
+    res.status(HTTP.StatusCodes.OK).json(users);
+  } catch (error) {
+    next(error);
+  }
+};
