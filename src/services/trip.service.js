@@ -34,7 +34,6 @@ export const getTrip = async (tripId) => {
 };
 
 export const updateTrip = async (tripId, tripData) => {
-export const updateTrip = async (tripId, tripData) => {
   try {
     if (!tripId) throw new Error('Trip ID is required');
     if (!tripData) throw new Error('Trip data is required');

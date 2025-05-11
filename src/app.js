@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import connectDB from './config/db.js';
 import swaggerUi from 'swagger-ui-express';
-import cookieParser from 'cookie-parser';
 import swaggerSpec from './docs/swagger.js';
 import logger from './config/logger.js';
 import usersRoutes from './routes/user.route.js'
@@ -34,7 +33,6 @@ const init = async () => {
         app.use('/api/messages', messagesRoutes)
         
         app.use(errorHandler)
-
 
         logger.info('app initialized');
     } catch (error) {
