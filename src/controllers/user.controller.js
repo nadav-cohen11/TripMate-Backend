@@ -10,16 +10,15 @@ export const login = async (req, res, next) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.cookie('token', token, {
       httpOnly: true,
-      secure: false,       
+      secure: false,
       sameSite: 'strict',
-      maxAge: 3600000, 
+      maxAge: 3600000,
     });
-    res.status(HTTP.StatusCodes.OK).json({ message: 'Login successful',id: user.id });
+    res.status(HTTP.StatusCodes.OK).json({ message: 'Login successful', id: user.id });
   } catch (error) {
     next(error);
   }
 };
-
 export const register = async (req, res, next) => {
   try {
     const user = await UserServices.createUser(req.body);
@@ -46,6 +45,15 @@ export const getUser = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getUserLoggedIn = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    return res.status(HTTP.StatusCodes.OK).json(userId);
+  } catch (error) {
+    next()
+  };
+}
 
 export const deleteUser = async (req, res, next) => {
   try {
