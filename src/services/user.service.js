@@ -7,7 +7,7 @@ export const login = async (email, password) => {
   try {
     const user = await User.findOne({ email }).lean();
     if (!user) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
-
+    console.log(email,password)
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
     delete user.password

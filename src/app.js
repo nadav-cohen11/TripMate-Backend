@@ -26,7 +26,7 @@ const init = async () => {
         app.use(cookieParser());
 
         app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-        app.use('/api/users', usersRoutes);
+        app.use('/api/', usersRoutes);
         app.use('/api/matches', matchesRoutes);
         app.use('/api/trips', tripsRoutes);
         app.use('/api/reviews', reviewsRoute);
