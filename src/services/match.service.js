@@ -81,7 +81,6 @@ export const getConfirmedMatches = async (userId) => {
     })
       .populate({ path: 'user1Id', select: 'fullName photos bio gender adventureStyle ' })
       .populate({ path: 'user2Id', select: 'fullName photos bio gender adventureStyle ' })
-      .populate({ path: 'tripId', select: 'tripName travelDates date' })
       .sort({ respondedAt: -1 });
     if (!confirmedMatches) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Confirmed matches not found');
     return confirmedMatches;
