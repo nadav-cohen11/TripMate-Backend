@@ -34,6 +34,7 @@ export const getTrip = async (tripId) => {
 };
 
 export const updateTrip = async (tripId, tripData) => {
+export const updateTrip = async (tripId, tripData) => {
   try {
     if (!tripId) throw new Error('Trip ID is required');
     if (!tripData) throw new Error('Trip data is required');
@@ -48,6 +49,7 @@ export const deleteTrip = async (tripId) => {
     if (!tripId) throw new Error('Trip ID is required');
     return await Trip.findByIdAndDelete(tripId);
   } catch (error) {
+    throw error;
     throw error;
   }
 };

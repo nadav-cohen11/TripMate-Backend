@@ -4,16 +4,15 @@ import dotenv from 'dotenv';
 import User from '../src/models/user.model.js';
 import Trip from '../src/models/trip.model.js';
 import Match from '../src/models/match.model.js';
-import Chat from '../src/models/chat.model.js';
 import Review from '../src/models/review.model.js';
+import bcrypt from 'bcrypt'
 
 dotenv.config();
 
-const NUM_USERS = 10;
+const NUM_USERS = 100;
 const NUM_TRIPS = 100;
 const NUM_REVIEWS = 100;
-const NUM_MATCHES = 30;
-const NUM_CHATS = 20;
+const NUM_MATCHES = 1000;
 
 await mongoose.connect(process.env.MONGO_URI);
 console.log('Connected to DB');
@@ -24,7 +23,6 @@ async function clearCollections() {
     Trip.deleteMany({}),
     Review.deleteMany({}),
     Match.deleteMany({}),
-    Chat.deleteMany({}),
   ]);
   console.log('Cleared collections');
 }
@@ -47,15 +45,16 @@ async function seedUsers() {
   const users = [];
 
   for (let i = 0; i < NUM_USERS; i++) {
+    const hashedPassword = await bcrypt.hash('123', 10);
     users.push(new User({
       fullName: faker.person.fullName(),
       email: faker.internet.email().toLowerCase(),
-      password: faker.internet.password(),
+      password: hashedPassword,
       birthDate: faker.date.between({ from: '1980-01-01', to: '2005-01-01' }),
       gender: getRandomEnum(['male', 'female']),
       languagesSpoken: faker.helpers.arrayElements(['english', 'spanish', 'french', 'german', 'hebrew'], 2),
       location: generateLocation(),
-      adventureStyle: getRandomEnum(['Relaxed', 'Exploratory', 'Extreme', 'Photography', 'Other']),
+      adventureStyle: getRandomEnum(['Relaxed', 'Exploratory', 'Extreme', 'Photography']),
       bio: faker.lorem.sentence(),
       photos: Array.from({ length: 3 }, () => faker.image.avatar()),
       socialLinks: {
@@ -160,7 +159,6 @@ async function seedMatches(users, trips) {
     matches.push(new Match({
       user1Id: user1._id,
       user2Id: user2._id,
-      tripId: faker.helpers.arrayElement(trips)._id,
       status: getRandomEnum(['pending', 'accepted', 'declined']),
       initiatedBy: faker.datatype.boolean() ? user1._id : user2._id,
       compatibilityScore: faker.number.int({ min: 50, max: 100 }),
@@ -173,31 +171,6 @@ async function seedMatches(users, trips) {
   return Match.insertMany(matches);
 }
 
-async function seedChats(users) {
-  const chats = [];
-
-  for (let i = 0; i < NUM_CHATS; i++) {
-    const participants = faker.helpers.shuffle(users).slice(0, 2);
-    const messages = Array.from({ length: 3 }, () => ({
-      sender: faker.helpers.arrayElement(participants)._id,
-      content: faker.lorem.sentence(),
-      messageType: 'text',
-      sentAt: new Date(),
-      readBy: participants.map(p => p._id),
-    }));
-
-    chats.push(new Chat({
-      isGroupChat: false,
-      participants: participants.map(p => p._id),
-      messages,
-      lastMessageAt: messages[messages.length - 1].sentAt,
-      lastMessagePreview: messages[messages.length - 1].content,
-    }));
-  }
-
-  return Chat.insertMany(chats);
-}
-
 async function main() {
   await clearCollections();
 
@@ -205,7 +178,6 @@ async function main() {
   const trips = await seedTrips(users);
   await seedReviews(users, trips);
   await seedMatches(users, trips);
-  await seedChats(users);
 
   console.log('Seed completed.');
   process.exit();

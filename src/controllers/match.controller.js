@@ -1,84 +1,92 @@
 import * as MatchServices from '../services/match.service.js';
 import HTTP from '../constants/status.js';
-import sendErrorResponse from '../utils/errorHandler.js';
 
-export const createOrAcceptMatch = async (req, res) => {
-  const { user1Id, user2Id, tripId, scores } = req.body;
+export const createOrAcceptMatch = async (req, res, next) => {
   try {
-    const match = await MatchServices.createOrAcceptMatch(user1Id, user2Id, tripId, scores);
-    return res.status(HTTP.StatusCodes.CREATED).json(match);
+    const user1Id = req.user.id;
+    const { user2Id, scores } = req.body;
+    const match = await MatchServices.createOrAcceptMatch(user1Id, user2Id, scores);
+    res.status(HTTP.StatusCodes.CREATED).json(match.status);
   } catch (error) {
-    return sendErrorResponse(res, HTTP.StatusCodes.BAD_REQUEST, error.message);
+    next(error);
   }
 };
 
-export const getConfirmedMatches = async (req, res) => {
-  const { userId } = req.params;
+export const getConfirmedMatches = async (req, res, next) => {
   try {
-    const matches = await MatchServices.getConfirmedMatches(userId);
-    return res.status(HTTP.StatusCodes.OK).json(matches);
+    const confirmeMatches = await MatchServices.getConfirmedMatches(req.user.id);
+    res.status(HTTP.StatusCodes.OK).json(confirmeMatches);
   } catch (error) {
-    return sendErrorResponse(res, HTTP.StatusCodes.BAD_REQUEST, 'Failed to fetch confirmed matches');
+    next(error);
   }
 };
 
-export const getAllMatches = async (req, res) => {
+export const getAllMatches = async (req, res, next) => {
   try {
     const matches = await MatchServices.getAllMatches();
-    return res.status(HTTP.StatusCodes.OK).json(matches);
+    res.status(HTTP.StatusCodes.OK).json(matches);
   } catch (error) {
-    return sendErrorResponse(res, HTTP.StatusCodes.BAD_REQUEST, 'Failed to fetch all matches');
+    next(error);
   }
 };
 
-export const getReceivedPending = async (req, res) => {
-  const { userId } = req.params;
+export const getReceivedPending = async (req, res, next) => {
   try {
+    const { userId } = req.params;
     const matches = await MatchServices.getPendingReceived(userId);
-    return res.status(HTTP.StatusCodes.OK).json(matches);
+    res.status(HTTP.StatusCodes.OK).json(matches);
   } catch (error) {
-    return sendErrorResponse(res, HTTP.StatusCodes.BAD_REQUEST, 'Failed to fetch received pending matches');
+    next(error);
   }
 };
 
-export const getSentPending = async (req, res) => {
-  const { userId } = req.params;
+export const getSentPending = async (req, res, next) => {
   try {
-    const matches = await MatchServices.getPendingSent(userId);
-    return res.status(HTTP.StatusCodes.OK).json(matches);
+    const matches = await MatchServices.getPendingSent(req.user.id);
+    res.status(HTTP.StatusCodes.OK).json(matches);
   } catch (error) {
-    return sendErrorResponse(res, HTTP.StatusCodes.BAD_REQUEST, 'Failed to fetch sent pending matches');
+    next(error);
   }
 };
 
-export const decline = async (req, res) => {
-  const { matchId } = req.params;
-  const { userId } = req.body;
+export const decline = async (req, res, next) => {
   try {
-    const result = await MatchServices.declineMatch(matchId, userId);
-    return res.status(HTTP.StatusCodes.OK).json(result);
+    const { matchId } = req.params
+    const result = await MatchServices.declineMatch(matchId, req.body.userId);
+    res.status(HTTP.StatusCodes.OK).json(result);
   } catch (error) {
-    return sendErrorResponse(res, HTTP.StatusCodes.FORBIDDEN, error.message);
+    next(error);
   }
 };
 
-export const unmatch = async (req, res) => {
-  const { user1Id, user2Id, tripId } = req.body;
+export const unmatch = async (req, res, next) => {
   try {
-    await MatchServices.unmatchUsers(user1Id, user2Id, tripId);
-    return res.sendStatus(HTTP.StatusCodes.NO_CONTENT);
+    const user1Id = req.user.id;
+    const { user2Id } = req.body;
+    await MatchServices.unmatchUsers(user1Id, user2Id);
+    res.status(HTTP.StatusCodes.NO_CONTENT).send();
   } catch (error) {
-    return sendErrorResponse(res, HTTP.StatusCodes.BAD_REQUEST, 'Failed to unmatch');
+    next(error);
   }
 };
 
-export const block = async (req, res) => {
-  const { matchId } = req.params;
-  const { userId } = req.body;
+export const block = async (req, res, next) => {
   try {
-    const result = await MatchServices.blockMatch(matchId, userId);
-    return res.status(HTTP.StatusCodes.OK).json(result);
+    const { matchId } = req.params
+    const result = await MatchServices.blockMatch(matchId, req.body.userId);
+    res.status(HTTP.StatusCodes.OK).json(result);
   } catch (error) {
-    return sendErrorResponse(res, HTTP.StatusCodes.FORBIDDEN, error.message);
+    next(error);
+  }
+};
+
+
+export const getNonMatchedUsers = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const nonMatchedUsers = await MatchServices.getNonMatchedUsers(userId);
+    res.status(HTTP.StatusCodes.OK).json(nonMatchedUsers);
+  } catch (error) {
+    next(error);
   }
 };

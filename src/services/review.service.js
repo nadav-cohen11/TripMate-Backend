@@ -1,15 +1,11 @@
+import HTTP from '../constants/status.js';
 import Review from '../models/review.model.js';
+import createError from 'http-errors';
 
 export const createReview = async (reviewData) => {
-  const { reviewerId, revieweeId, tripId, rating, comment } = reviewData;
   try {
-    return await Review.create({
-      reviewerId,
-      revieweeId,
-      tripId,
-      rating,
-      comment,
-    });
+    const review = await Review.create(reviewData);
+    return review;
   } catch (error) {
     throw error;
   }
@@ -17,10 +13,12 @@ export const createReview = async (reviewData) => {
 
 export const getReviewById = async (reviewId) => {
   try {
-    return await Review.findById(reviewId)
+    const review = await Review.findById(reviewId)
       .populate('reviewerId', 'fullName email')
       .populate('revieweeId', 'fullName email')
       .exec();
+    if (!review) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Review not found')
+    return review;
   } catch (error) {
     throw error;
   }
@@ -28,32 +26,30 @@ export const getReviewById = async (reviewId) => {
 
 export const getReviewsForUser = async (userId) => {
   try {
-    return await Review.find({ revieweeId: userId })
+    const userReviews = await Review.find({ revieweeId: userId })
       .populate('reviewerId', 'fullName email')
       .exec();
+    if (!userReviews) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reviews not found the user')
+    return userReviews;
   } catch (error) {
     throw error;
   }
 };
 
-export const updateReview = async (reviewId, updatedData) => {
+export const updateReview = async (reviewId, reviewData) => {
   try {
-    const review = await Review.findById(reviewId);
-
-    if (!review) {
-      throw new Error('Review not found');
-    }
-    Object.assign(review, updatedData);
-    await review.save();
-    return review;
+    const review = await Review.findByIdAndUpdate(reviewId, reviewData, { new: true });
+    if (!review) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Review not found');
   } catch (error) {
-    throw new Error(error.message);
+    throw error;
   }
 };
 
 export const deleteReview = async (reviewId) => {
   try {
-    return await Review.findByIdAndDelete(reviewId);
+    const deleted = await Review.findByIdAndDelete(reviewId);
+    if (!deleted) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Review not found');
+    return deleted;
   } catch (error) {
     throw error;
   }

@@ -1,64 +1,53 @@
 import * as ReviewService from '../services/review.service.js';
 import HTTP from '../constants/status.js';
-import sendErrorResponse from '../utils/errorHandler.js';
 
-export const createReview = async (req, res) => {
-  const { reviewerId, revieweeId, tripId, rating, comment } = req.body;
+export const createReview = async (req, res, next) => {
   try {
-    const review = await ReviewService.createReview({
-      reviewerId,
-      revieweeId,
-      tripId,
-      rating,
-      comment,
-    });
+
+    const review = await ReviewService.createReview(req.body)
     return res.status(HTTP.StatusCodes.CREATED).json(review);
   } catch (error) {
-    return sendErrorResponse(res, HTTP.StatusCodes.BAD_REQUEST, error.message);
-  }
+    next(error);
+  } 
 };
 
-export const getReviewById = async (req, res) => {
-  const { reviewId } = req.params;
+export const getReviewById = async (req, res, next) => {
   try {
-    const review = await ReviewService.getReviewById(reviewId);
-    return res.status(HTTP.StatusCodes.OK).json(review);
-  } catch (error) {
-    return sendErrorResponse(res, HTTP.StatusCodes.BAD_REQUEST, error.message);
-  }
-};
-
-export const getReviewsForUser = async (req, res) => {
-  const { userId } = req.params;
-  try {
-    const reviews = await ReviewService.getReviewsForUser(userId);
-    return res.status(HTTP.StatusCodes.OK).json(reviews);
-  } catch (error) {
-    return sendErrorResponse(res, HTTP.StatusCodes.BAD_REQUEST, error.message);
-  }
-};
-
-export const updateReview = async (req, res) => {
     const { reviewId } = req.params;
-    const { rating, comment } = req.body;
+    const review = await ReviewService.getReviewById(reviewId);
+    res.status(HTTP.StatusCodes.OK).json(review);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getReviewsForUser = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const reviews = await ReviewService.getReviewsForUser(userId);
+    res.status(HTTP.StatusCodes.OK).json(reviews);
+  } catch (error) {
+    next(error)
+  }
+};
+
+export const updateReview = async (req, res, next) => {
     try {
-      const updatedReview = await ReviewService.updateReview(reviewId, { rating, comment });
-      return res.status(HTTP.StatusCodes.OK).json(updatedReview);
+      const { reviewId } = req.params;
+      const reviewData = req.body;
+      const updated = await ReviewService.updateReview(reviewId, reviewData);
+      res.status(HTTP.StatusCodes.OK).json(updated);
     } catch (error) {
-      return sendErrorResponse(res, HTTP.StatusCodes.BAD_REQUEST, error.message);
+      next(error);
     }
 };
 
-export const deleteReview = async (req, res) => {
-    const { reviewId } = req.params;
+export const deleteReview = async (req, res, next) => {    
     try {
-      const result = await ReviewService.deleteReview(reviewId);
-      if (!result) {
-        return sendErrorResponse(res, HTTP.StatusCodes.BAD_REQUEST, 'Review not found');
-      }
-      return res.status(HTTP.StatusCodes.OK).json({ message: 'Review successfully deleted' });
+      await ReviewService.deleteReview(req.body.reviewId);
+      res.status(HTTP.StatusCodes.NO_CONTENT).send()
     } catch (error) {
-      return sendErrorResponse(res, HTTP.StatusCodes.BAD_REQUEST, error.message);
+      next(error);
     }
   };
   

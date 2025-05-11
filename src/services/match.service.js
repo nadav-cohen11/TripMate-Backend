@@ -1,24 +1,24 @@
 import Match from '../models/match.model.js';
-import Trip from '../models/trip.model.js'
+import createError from 'http-errors';
+import HTTP from '../constants/status.js';
+import User from '../models/user.model.js';
 
-export const createOrAcceptMatch = async (user1Id, user2Id, tripId, scores = {}) => {
+export const createOrAcceptMatch = async (user1Id, user2Id, scores = {}) => {
   try {
     const existingPendingMatch = await Match.findOne({
       user1Id: user2Id,
       user2Id: user1Id,
-      tripId,
       status: 'pending',
     });
 
     if (existingPendingMatch) {
       existingPendingMatch.status = 'accepted';
-      existingPendingMatch.respondedAt = new Date();
+      existingPendingMatch.matchedAt = new Date();
       await existingPendingMatch.save();
 
       return await Match.create({
         user1Id,
         user2Id,
-        tripId,
         initiatedBy: user1Id,
         status: 'accepted',
         respondedAt: new Date(),
@@ -26,17 +26,16 @@ export const createOrAcceptMatch = async (user1Id, user2Id, tripId, scores = {})
       });
     }
 
-    const existing = await Match.findOne({ user1Id, user2Id, tripId });
-    if (existing) throw new Error('Match already exists');
-
-    return await Match.create({
+    const existing = await Match.findOne({ user1Id, user2Id });
+    if (existing) throw createError(HTTP.StatusCodes.CONFLICT, 'match already exist');
+    const match = await Match.create({
       user1Id,
       user2Id,
-      tripId,
       initiatedBy: user1Id,
       status: 'pending',
       ...scores,
     });
+    return match;
   } catch (error) {
     throw error;
   }
@@ -44,25 +43,30 @@ export const createOrAcceptMatch = async (user1Id, user2Id, tripId, scores = {})
 
 export const getAllMatches = async () => {
   try {
-    return await Match.find({})
-      .populate('user1Id', 'fullName')
-      .populate('user2Id', 'fullName')
-      .populate('tripId', 'travelDates')
-      .sort({ createdAt: -1 })
+    const matches = await Match.find({})
+      .populate({ path: 'user1Id', select: 'fullName photos' })
+      .populate({ path: 'user2Id', select: 'fullName photos' })
+      .populate({ path: 'tripId', select: 'tripName travelDates date' })
+      .sort({ createdAt: -1 });
+    if (!matches) throw createError(HTTP.StatusCodes.CONFLICT, 'No matches found');
+    return matches;
   } catch (error) {
     throw error;
   }
 };
 
+
 export const getPendingReceived = async (userId) => {
   try {
-    return await Match.find({
+    const pendingReceived = await Match.find({
       user2Id: userId,
       status: 'pending',
     })
-      .populate('user1Id', 'name avatar')
-      .populate('tripId', 'tripName date')
+      .populate({ path: 'user1Id', select: 'fullName photos' })
+      .populate({ path: 'tripId', select: 'tripName date' })
       .sort({ createdAt: -1 });
+    if (!pendingReceived) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Pending matches not found')
+    return pendingReceived;
   } catch (error) {
     throw error;
   }
@@ -70,15 +74,17 @@ export const getPendingReceived = async (userId) => {
 
 export const getConfirmedMatches = async (userId) => {
   try {
-    return await Match.find({
+    const confirmedMatches = await Match.find({
       isBlocked:false,
       status: 'accepted',
       $or: [{ user1Id: userId }, { user2Id: userId }],
     })
-      .populate('user1Id', 'fullName')
-      .populate('user2Id', 'fullName')
-      .populate('tripId', 'travelDates')
-      .sort({ matchedAt: -1 })
+      .populate({ path: 'user1Id', select: 'fullName photos bio gender adventureStyle ' })
+      .populate({ path: 'user2Id', select: 'fullName photos bio gender adventureStyle ' })
+      .populate({ path: 'tripId', select: 'tripName travelDates date' })
+      .sort({ respondedAt: -1 });
+    if (!confirmedMatches) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Confirmed matches not found');
+    return confirmedMatches;
   } catch (error) {
     throw error;
   }
@@ -86,13 +92,15 @@ export const getConfirmedMatches = async (userId) => {
 
 export const getPendingSent = async (userId) => {
   try {
-    return await Match.find({
+    const PendingSentMatches = await Match.find({
       status: 'pending',
       $or: [{ user1Id: userId }, { user2Id: userId }],
     })
-      .populate('user2Id', 'name avatar')
-      .populate('tripId', 'tripName date')
+      .populate({ path: 'user2Id', select: 'fullName photos bio gender adventureStyle ' })
+      .populate({ path: 'tripId', select: 'tripName date' })
       .sort({ createdAt: -1 });
+    if (!PendingSentMatches) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Pending sent matches not found');
+    return PendingSentMatches;
   } catch (error) {
     throw error;
   }
@@ -101,29 +109,27 @@ export const getPendingSent = async (userId) => {
 export const declineMatch = async (matchId, userId) => {
   try {
     const match = await Match.findById(matchId);
-    if (!match) {
-      throw new Error('Match not found');
-    }
-    if (!match.user2Id.equals(userId)) {
-      throw new Error('Unauthorized to decline this match');
-    }
+    if (!match) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    if (!match.user1Id.equals(userObjectId) && !match.user2Id.equals(userObjectId)) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Unauthorized to decline this match');
     match.status = 'declined';
     match.respondedAt = new Date();
-    return await match.save();
+    const savedMatch = await match.save();
+    return savedMatch;
   } catch (error) {
     throw error;
   }
 };
 
-export const unmatchUsers = async (user1Id, user2Id, tripId) => {
+export const unmatchUsers = async (user1Id, user2Id) => {
   try {
-    return await Match.deleteMany({
-      tripId,
+    const unMatch = await Match.deleteMany({
       $or: [
-        { user1Id, user2Id },
+        { user1Id: user1Id, user2Id: user2Id },
         { user1Id: user2Id, user2Id: user1Id },
       ],
     });
+    return unMatch;
   } catch (error) {
     throw error;
   }
@@ -138,10 +144,32 @@ export const blockMatch = async (user1Id, user2Id) => {
       ],
     });
     if (!match) {
-      throw new Error('Match not found');
+      throw createError(HTTP.StatusCodes.NOT_FOUND,'Match not found');
     }
     match.isBlocked = true;
     return await match.save();
+  } catch (error) {
+    throw error;
+  }
+};
+export const getNonMatchedUsers = async (userId) => {
+  try {
+    const matchedUserIds = await Match.find({
+      $or: [{ user1Id: userId }, { user2Id: userId }],
+    }).distinct('user1Id user2Id');
+
+    const pendingSentUserIds = await Match.find({
+      user1Id: userId,
+      status: 'pending',
+    }).distinct('user2Id');
+
+    const excludedUserIds = matchedUserIds.concat(pendingSentUserIds, userId);
+
+    const nonMatchedUsers = await User.find({
+      _id: { $nin: excludedUserIds },
+    }).select('-password -isDeleted -createdAt -updatedAt');
+    if (nonMatchedUsers.length === 0) throw createError(HTTP.StatusCodes.NOT_FOUND, 'No users in your area');
+    return nonMatchedUsers;
   } catch (error) {
     throw error;
   }

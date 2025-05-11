@@ -15,10 +15,6 @@ const MatchSchema = new Schema({
     required: true,
     index: true,
   },
-  tripId: {
-    type: Types.ObjectId,
-    ref: 'Trip',
-  },
   status: {
     type: String,
     enum: ['pending', 'accepted', 'declined'],
@@ -29,10 +25,6 @@ const MatchSchema = new Schema({
     ref: 'User',
   },
   matchedAt: {
-    type: Date,
-    default: Date.now,
-  },
-  respondedAt: {
     type: Date,
   },
   compatibilityScore: {
