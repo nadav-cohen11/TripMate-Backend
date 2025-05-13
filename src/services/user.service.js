@@ -3,19 +3,26 @@ import createError from 'http-errors';
 import User from '../models/user.model.js'
 import bcrypt from 'bcrypt'
 
-export const login = async (email, password) => {
+export const login = async (email, password, location) => {
   try {
-    const user = await User.findOne({ email }).lean();
+    const user = await User.findOne({ email });
     if (!user) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
     console.log(email,password)
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
-    delete user.password
-    return user;
+    if (location) {
+      user.location = location;
+      await user.save();
+    }
+
+    const userObject = user.toObject();
+    delete userObject.password;
+    return userObject;
   } catch (error) {
     throw error;
   }
 };
+
 
 export const createUser = async (userData) => {
   try {
@@ -68,6 +75,30 @@ export const getUser = async (userId) => {
 export const getAllUsers = async () => {
   try {
     return await User.find({}).select('-password');
+  } catch (error) {
+    throw error
+  }
+}
+
+export const updateUserLocation = async (userId, latitude, longitude) => {
+  return await User.findOneAndUpdate(
+    { userId },
+    {
+      location: {
+        type: 'Point',
+        coordinates: [longitude, latitude],
+      },
+      updatedAt: new Date(),
+    },
+    { upsert: true, new: true }
+  );
+};
+
+export const getUserCordinates = async (userId) => {
+  try {
+    const userLocation = await User.findById(userId).select('location');
+    if (!userLocation) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Location not found');
+    return userLocation;
   } catch (error) {
     throw error
   }

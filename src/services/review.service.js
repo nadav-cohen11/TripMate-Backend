@@ -27,7 +27,7 @@ export const getReviewById = async (reviewId) => {
 export const getReviewsForUser = async (userId) => {
   try {
     const userReviews = await Review.find({ revieweeId: userId })
-      .populate('reviewerId', 'fullName email')
+      .populate('reviewerId', 'fullName email photos')
       .exec();
     if (!userReviews) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reviews not found the user')
     return userReviews;

@@ -7,7 +7,6 @@ export const verifyToken = (req, res, next) => {
   if (!token) {
     return next(createError(HTTP.StatusCodes.UNAUTHORIZED, 'Access token missing'));
   }
-
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
