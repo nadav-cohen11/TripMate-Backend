@@ -83,7 +83,7 @@ export const block = async (req, res, next) => {
 export const getNearbyUsersHandler = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const maxDistance = parseInt(req.query.maxDistance, 10) || 100000;
+    const maxDistance = parseInt(req.query.maxDistance, 10) || 10000;
     const users = await MatchServices.getNonMatchedNearbyUsers(userId, maxDistance);
     res.status(200).json(users);
   } catch (error) {

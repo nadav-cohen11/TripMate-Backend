@@ -77,11 +77,8 @@ export const getAllUsers = async (req, res, next) => {
 export const updateLocation = async (req, res, next) => {
   try {
     const { latitude, longitude } = req.body;
-    if (!latitude || !longitude) {
-      return res.status(HTTP.StatusCodes.OK).json({ message: 'Missing coordinates' });
-    }
     await UserServices.updateUserLocation(req.user.id, latitude, longitude);
-    res.status(HTTP.OK).json({ message: 'Location updated' });
+    res.status(HTTP.StatusCodes.OK).json({ message: 'Location updated' });
   } catch (error) {
     next(error);
   }
@@ -90,7 +87,7 @@ export const updateLocation = async (req, res, next) => {
 export const getUserLocation = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const userLocation = await UserServices.getUserCordinates(userId);
+    const userLocation = await UserServices.getUserCoordinates(userId);
     res.status(HTTP.StatusCodes.OK).json(userLocation);
   } catch (error) {
     next(error);

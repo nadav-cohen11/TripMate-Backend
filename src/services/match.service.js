@@ -148,8 +148,12 @@ export const blockMatch = async (matchId, userId) => {
   }
 };
 
-export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters = 100000) => {
+export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters) => {
   try {
+    if (maxDistanceInMeters < 0) {
+      throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid maxDistanceInMeters value');
+    }
+
     const matchedUserIds = await Match.find({
       $or: [{ user1Id: userId }, { user2Id: userId }],
     }).distinct('user1Id user2Id');
@@ -161,11 +165,11 @@ export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters = 100
 
     const excludedUserIds = [...new Set([...matchedUserIds, ...pendingSentUserIds, userId])];
   
-    const currentUserLocation = await User.findById( userId );
-    if (!currentUserLocation) throw createError(HTTP.NOT_FOUND, 'User location not found');
+    const currentUserLocation = await User.findById(userId);
+    if (!currentUserLocation) throw createError(HTTP.StatusCodes.NOT_FOUND, 'User location not found');
 
     const nearbyUserLocations = await User.find({
-      userId: { $nin: excludedUserIds },
+      _id: { $nin: excludedUserIds },
       location: {
         $near: {
           $geometry: currentUserLocation.location,
@@ -181,7 +185,7 @@ export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters = 100
     }).select('-password -isDeleted -createdAt -updatedAt');
 
     if (nonMatchedNearbyUsers.length === 0) {
-      throw createError(HTTP.NOT_FOUND, 'No nearby users found');
+      throw createError(HTTP.StatusCodes.NOT_FOUND, 'No nearby users found');
     }
     
     const filteredUsers = nonMatchedNearbyUsers.filter(
