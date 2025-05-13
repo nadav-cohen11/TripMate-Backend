@@ -51,6 +51,6 @@ export const ItineraryItemSchema = new Schema({
 
 export const ParticipantSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  isConfirmed: { type: Boolean, default: false },
+  isConfirmed: { type: Boolean, default: true },
   joinedAt: { type: Date, default: Date.now },
 }, { _id: false });
