@@ -46,7 +46,7 @@ export const getAllMatches = async () => {
     const matches = await Match.find({})
       .populate({ path: 'user1Id', select: 'fullName photos' })
       .populate({ path: 'user2Id', select: 'fullName photos' })
-      .populate({ path: 'tripId', select: 'tripName date' })
+      .populate({ path: 'tripId', select: 'tripName travelDates date' })
       .sort({ createdAt: -1 });
     if (!matches) throw createError(HTTP.StatusCodes.CONFLICT, 'No matches found');
     return matches;
@@ -75,12 +75,12 @@ export const getPendingReceived = async (userId) => {
 export const getConfirmedMatches = async (userId) => {
   try {
     const confirmedMatches = await Match.find({
+      isBlocked:false,
       status: 'accepted',
       $or: [{ user1Id: userId }, { user2Id: userId }],
     })
       .populate({ path: 'user1Id', select: 'fullName photos bio gender adventureStyle ' })
       .populate({ path: 'user2Id', select: 'fullName photos bio gender adventureStyle ' })
-      .populate({ path: 'tripId', select: 'tripName date' })
       .sort({ respondedAt: -1 });
     if (!confirmedMatches) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Confirmed matches not found');
     return confirmedMatches;
@@ -110,7 +110,7 @@ export const declineMatch = async (matchId, userId) => {
     const match = await Match.findById(matchId);
     if (!match) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
     const userObjectId = new mongoose.Types.ObjectId(userId);
-    if (!match.user1Id.equals(userObjectId) && !match.user2Id.equals(userObjectId)) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Unauthorized to decline this match'); 
+    if (!match.user1Id.equals(userObjectId) && !match.user2Id.equals(userObjectId)) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Unauthorized to decline this match');
     match.status = 'declined';
     match.respondedAt = new Date();
     const savedMatch = await match.save();
@@ -134,21 +134,25 @@ export const unmatchUsers = async (user1Id, user2Id) => {
   }
 };
 
-export const blockMatch = async (matchId, userId) => {
+export const blockMatch = async (user1Id, user2Id) => {
   try {
-    const match = await Match.findById(matchId);
-    if (!match) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
-    const userObjectId = new mongoose.Types.ObjectId(userId);
-    if (!match.user1Id.equals(userObjectId) && !match.user2Id.equals(userObjectId)) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Unauthorized to block this match');
+    const match = await Match.findOne({
+      $or: [
+        { user1Id, user2Id },
+        { user1Id: user2Id, user2Id: user1Id },
+      ],
+    });
+    if (!match) {
+      throw createError(HTTP.StatusCodes.NOT_FOUND,'Match not found');
+    }
     match.isBlocked = true;
-    const BlockedMatch = await match.save();
-    return BlockedMatch.isBlocked;
+    return await match.save();
   } catch (error) {
     throw error;
   }
 };
-
 export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters = 100000) => {
+
   try {
     const matchedUserIds = await Match.find({
       $or: [{ user1Id: userId }, { user2Id: userId }],
