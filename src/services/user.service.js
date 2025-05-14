@@ -81,6 +81,9 @@ export const getAllUsers = async () => {
 }
 
 export const updateUserLocation = async (userId, latitude, longitude) => {
+  if ( !latitude || !longitude || typeof latitude !== 'number' || typeof longitude !== 'number' ||  latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    throw createError(HTTP.StatusCodes.NOT_FOUND, 'Invalid coordinates');
+  }
   return await User.findOneAndUpdate(
     { userId },
     {
@@ -89,17 +92,26 @@ export const updateUserLocation = async (userId, latitude, longitude) => {
         coordinates: [longitude, latitude],
       },
       updatedAt: new Date(),
-    },
-    { upsert: true, new: true }
+    }
   );
 };
 
-export const getUserCordinates = async (userId) => {
+export const getUserCoordinates = async (userId) => {
   try {
     const userLocation = await User.findById(userId).select('location');
     if (!userLocation) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Location not found');
     return userLocation;
   } catch (error) {
-    throw error
+    throw error;
   }
 }
+
+export const getUsersLocations = async () => {
+  try {
+    const userLocation = await User.find({ location: { $exists: true } }).select('location.coordinates photos fullName')
+    if (!userLocation) throw createError(HTTP.StatusCodes.NOT_FOUND, []);
+    return userLocation;
+  } catch (error) {
+    throw error;
+  }
+};
