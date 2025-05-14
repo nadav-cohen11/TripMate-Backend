@@ -4,12 +4,12 @@ import { verifyToken } from '../middlewares/auth.js';
 
 const router = express.Router();
 
-router.post('/register', userController.register);
-router.post('/login', userController.login);
-router.put('/:userId',verifyToken, userController.updateUser);
-router.delete('/:userId', userController.deleteUser);
-router.get('/', userController.getAllUsers);
-router.get('/location', verifyToken, userController.getUserLocation);
-router.get('/usersLocations', userController.getUserLocations);
+router.post('/register', UserControllers.register);
+router.post('/login', UserControllers.login);
+router.put('/:userId',verifyToken, UserControllers.updateUser);
+router.delete('/:userId', UserControllers.deleteUser);
+router.get('/', UserControllers.getAllUsers);
+router.get('/location', verifyToken, UserControllers.getUserLocation);
+router.get('/usersLocations', UserControllers.getUserLocations);
 
 export default router;
