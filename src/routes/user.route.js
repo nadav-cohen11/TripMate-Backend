@@ -1,8 +1,10 @@
 import express from 'express';
 import * as UserControllers from '../controllers/user.controller.js';
 import { verifyToken } from '../middlewares/auth.js';
+import * as HotelsController from '../controllers/hotels.controller.js'
 
 const router = express.Router();
+
 
 router.post('/register', UserControllers.register);
 router.post('/login', UserControllers.login);

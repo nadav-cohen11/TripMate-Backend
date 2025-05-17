@@ -11,7 +11,7 @@ import reviewsRoute from './routes/review.route.js'
 import tripsRoutes from './routes/trip.route.js'
 import messagesRoutes from './routes/message.route.js'
 import cookieParser from 'cookie-parser';
-
+import hotelsRoute from './routes/hotels.route.js'
 import * as dotenv from 'dotenv';
 
 dotenv.config({ path: '.env' });
@@ -31,6 +31,8 @@ const init = async () => {
         app.use('/api/trips', tripsRoutes);
         app.use('/api/reviews', reviewsRoute);
         app.use('/api/messages', messagesRoutes)
+        app.use('/api/hotels', hotelsRoute);
+
         
         app.use(errorHandler)
 
