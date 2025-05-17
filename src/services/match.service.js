@@ -2,6 +2,7 @@ import Match from '../models/match.model.js';
 import createError from 'http-errors';
 import HTTP from '../constants/status.js';
 import User from '../models/user.model.js';
+import logger from '../config/logger.js';
 
 export const createOrAcceptMatch = async (user1Id, user2Id, scores = {}) => {
   try {
@@ -74,6 +75,7 @@ export const getPendingReceived = async (userId) => {
 
 export const getConfirmedMatches = async (userId) => {
   try {
+   logger.info(userId)
     const confirmedMatches = await Match.find({
       isBlocked:false,
       status: 'accepted',
@@ -81,7 +83,8 @@ export const getConfirmedMatches = async (userId) => {
     })
       .populate({ path: 'user1Id', select: 'fullName photos bio gender adventureStyle ' })
       .populate({ path: 'user2Id', select: 'fullName photos bio gender adventureStyle ' })
-      .sort({ respondedAt: -1 });
+      .sort({ respondedAt: -1 }).limit(0);
+      logger.info(confirmedMatches)
     if (!confirmedMatches) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Confirmed matches not found');
     return confirmedMatches;
   } catch (error) {

@@ -6,9 +6,11 @@ import * as TripServices from '../services/trip.service.js';
 export const initSocket = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: '*',
+      origin: 'http://localhost:5173',
+      credentials: true
     }
   });
+  
 
   const onlineUsers = new Map();
 

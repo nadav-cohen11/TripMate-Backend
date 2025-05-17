@@ -14,11 +14,12 @@ export const login = async (req, res, next) => {
       sameSite: 'strict',
       maxAge: 3600000,
     });
-    res.status(HTTP.StatusCodes.OK).json({ message: 'Login successful', id: user.id });
+    res.status(HTTP.StatusCodes.OK).json({ id: user._id });
   } catch (error) {
     next(error);
   }
 };
+
 export const register = async (req, res, next) => {
   try {
     const user = await UserServices.createUser(req.body);
