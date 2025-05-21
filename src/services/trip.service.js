@@ -1,4 +1,5 @@
 import Trip from '../models/trip.model.js';
+import axios from 'axios';
 
 const validateTripData = (tripData) => {
   if (!tripData) throw new Error('Trip data is required');
@@ -80,6 +81,26 @@ export const unactiveUserFromTrip = async (tripId, userId) => {
     });
     await trip.save();
     return trip;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchNearbyEvents = async (lat, lon, keyword) => {
+  try {
+    const apiKey = process.env.TICKETMASTER_API_KEY;
+    const url = 'https://app.ticketmaster.com/discovery/v2/events.json';
+    const params = {
+      apikey: apiKey,
+      latlong: `${lat},${lon}`,
+      radius: 5000,
+      unit: 'km',
+    };
+
+    const response = await axios.get(url, { params });
+    const events = response.data._embedded?.events || [];
+
+    return events;
   } catch (error) {
     throw error;
   }

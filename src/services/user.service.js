@@ -2,6 +2,7 @@ import HTTP from '../constants/status.js';
 import createError from 'http-errors';
 import User from '../models/user.model.js'
 import bcrypt from 'bcrypt'
+import { isValidCoordinates } from '../utils/cordinatesValidator.js';
 
 export const login = async (email, password, location) => {
   try {
@@ -9,35 +10,47 @@ export const login = async (email, password, location) => {
     if (!user) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
-    if (location.coordinates) {
-      user.location = location;
+    if (!isValidCoordinates(location)) {
+      user.location.coordinates = location;
       await user.save();
     }
-    const userObject = user.toObject();
-    delete userObject.password;
-    return userObject;
-  } catch (error) {
-    throw error;
-  }
-};
-
-
-export const createUser = async (userData) => {
-  try {
-    const existEmail = await User.findOne({ email: userData.email }).lean();
-    if (existEmail) throw createError(HTTP.StatusCodes.CONFLICT, 'Email already in use');
-
-    const salt = await bcrypt.genSalt(10);
-    userData.password = await bcrypt.hash(userData.password, salt);
-
-    const user = new User(userData);
-    await user.save();
     delete user.password;
     return user;
   } catch (error) {
     throw error;
   }
-}
+};
+
+export const createUser = async (userData) => {
+  try {
+    const existing = await User.findOne({ email: userData.email }).lean();
+    if (existing) throw createError(HTTP.StatusCodes.CONFLICT, 'Email already in use');
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(userData.password, salt);
+
+    const location = userData.location;
+    
+    if (!isValidCoordinates(location)) {
+      throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid or missing location');
+    }
+
+    const newUser = new User({
+      ...userData,
+      password: hashedPassword,
+      location: {
+        type: 'Point',
+        coordinates: location, 
+      },
+    });
+
+    const savedUser = await newUser.save();
+    delete savedUser.password;
+    return savedUser;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const deleteUser = async (userId) => {
   try {
@@ -106,10 +119,11 @@ export const getUserCoordinates = async (userId) => {
 
 export const getUsersLocations = async () => {
   try {
-    const userLocation = await User.find({ location: { $exists: true } }).select('location.coordinates photos fullName')
+    const userLocation = await User.find({ location: { $exists: true } }).select('location.coordinates photos fullName socialLinks ')
     if (!userLocation) throw createError(HTTP.StatusCodes.NOT_FOUND, []);
     return userLocation;
   } catch (error) {
     throw error;
   }
 };
+
