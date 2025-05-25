@@ -22,7 +22,6 @@ export const login = async (req, res, next) => {
 
 export const register = async (req, res, next) => {
   try {
-    console.log(req.body)
     const user = await UserServices.createUser(req.body);
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
