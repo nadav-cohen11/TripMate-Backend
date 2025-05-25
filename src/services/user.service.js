@@ -2,6 +2,7 @@ import HTTP from '../constants/status.js';
 import createError from 'http-errors';
 import User from '../models/user.model.js'
 import bcrypt from 'bcrypt'
+import { isValidCoordinates } from '../utils/coordinatesValidator.js';
 
 export const login = async (email, password, location) => {
   try {
@@ -21,23 +22,33 @@ export const login = async (email, password, location) => {
   }
 };
 
-
 export const createUser = async (userData) => {
   try {
-    const existEmail = await User.findOne({ email: userData.email }).lean();
-    if (existEmail) throw createError(HTTP.StatusCodes.CONFLICT, 'Email already in use');
+    const existing = await User.findOne({ email: userData.email }).lean();
+    if (existing) throw createError(HTTP.StatusCodes.CONFLICT, 'Email already in use');
 
     const salt = await bcrypt.genSalt(10);
-    userData.password = await bcrypt.hash(userData.password, salt);
+    const hashedPassword = await bcrypt.hash(userData.password, salt);
 
-    const user = new User(userData);
-    await user.save();
-    delete user.password;
-    return user;
+    const location = userData.location;
+
+    if (!isValidCoordinates(location.coordinates)) {
+      throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid or missing location');
+    }
+
+    const newUser = new User({
+      ...userData,
+      password: hashedPassword,
+    });
+
+    const savedUser = await newUser.save();
+
+    delete savedUser.password;
+    return savedUser;
   } catch (error) {
     throw error;
   }
-}
+};
 
 export const deleteUser = async (userId) => {
   try {
@@ -49,8 +60,10 @@ export const deleteUser = async (userId) => {
   }
 }
 
-export const updateUser = async (userId, userData) => {
+export const updateUser = async (userId, {userData}) => {
   try {
+    const userToUpdate = await User.findById(userId)
+    userData.location.coordinates = userToUpdate.location.coordinates
     const user = await User.findByIdAndUpdate(userId, userData, { new: true }).lean();
     if (!user) throw createError(HTTP.StatusCodes.NOT_FOUND, 'User not found');
     delete user.password;
