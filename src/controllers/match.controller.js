@@ -15,7 +15,7 @@ export const createOrAcceptMatch = async (req, res, next) => {
 export const getConfirmedMatches = async (req, res, next) => {
   try {
     const confirmeMatches = await MatchServices.getConfirmedMatches(req.user.id);
-    res.status(HTTP.StatusCodes.OK).json(confirmeMatches);
+    res.status(HTTP.StatusCodes.OK).json({matches:confirmeMatches,userId:req.user.id});
   } catch (error) {
     next(error);
   }
@@ -32,8 +32,7 @@ export const getAllMatches = async (req, res, next) => {
 
 export const getReceivedPending = async (req, res, next) => {
   try {
-    const { userId } = req.params;
-    const matches = await MatchServices.getPendingReceived(userId);
+    const matches = await MatchServices.getPendingReceived(req.user.id);
     res.status(HTTP.StatusCodes.OK).json(matches);
   } catch (error) {
     next(error);

@@ -62,9 +62,9 @@ export const getPendingReceived = async (userId) => {
     const pendingReceived = await Match.find({
       user2Id: userId,
       status: 'pending',
+      isBlocked: false
     })
       .populate({ path: 'user1Id', select: 'fullName photos' })
-      .populate({ path: 'tripId', select: 'tripName date' })
       .sort({ createdAt: -1 });
     if (!pendingReceived) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Pending matches not found')
     return pendingReceived;
@@ -75,16 +75,15 @@ export const getPendingReceived = async (userId) => {
 
 export const getConfirmedMatches = async (userId) => {
   try {
-   logger.info(userId)
     const confirmedMatches = await Match.find({
-      isBlocked:false,
+      isBlocked: false,
       status: 'accepted',
       $or: [{ user1Id: userId }, { user2Id: userId }],
     })
-      .populate({ path: 'user1Id', select: 'fullName photos bio gender adventureStyle ' })
+      .populate({ path: 'user1Id', select: 'fullName bio gender adventureStyle photos' })
       .populate({ path: 'user2Id', select: 'fullName photos bio gender adventureStyle ' })
       .sort({ respondedAt: -1 }).limit(0);
-      logger.info(confirmedMatches)
+
     if (!confirmedMatches) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Confirmed matches not found');
     return confirmedMatches;
   } catch (error) {
@@ -146,7 +145,7 @@ export const blockMatch = async (user1Id, user2Id) => {
       ],
     });
     if (!match) {
-      throw createError(HTTP.StatusCodes.NOT_FOUND,'Match not found');
+      throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
     }
     match.isBlocked = true;
     return await match.save();
@@ -171,8 +170,8 @@ export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters) => {
     }).distinct('user2Id');
 
     const excludedUserIds = [...new Set([...matchedUserIds, ...pendingSentUserIds, userId])];
-  
-    const currentUserLocation = await User.findById( userId );
+
+    const currentUserLocation = await User.findById(userId);
 
     if (!currentUserLocation) throw createError(HTTP.StatusCodes.NOT_FOUND, 'User location not found');
 
@@ -187,7 +186,7 @@ export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters) => {
     });
 
     const nearbyUserIds = nearbyUserLocations.map((loc) => loc._id.toString());
-    
+
     const nonMatchedNearbyUsers = await User.find({
       _id: { $in: nearbyUserIds },
     }).select('-password -isDeleted -createdAt -updatedAt');
@@ -195,7 +194,7 @@ export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters) => {
     if (nonMatchedNearbyUsers.length === 0) {
       throw createError(HTTP.StatusCodes.NOT_FOUND, 'No nearby users found');
     }
-    
+
     const filteredUsers = nonMatchedNearbyUsers.filter(
       (user) => user._id.toString() !== userId.toString()
     );

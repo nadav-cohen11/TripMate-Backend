@@ -2,9 +2,11 @@ import HTTP from '../constants/status.js';
 import Review from '../models/review.model.js';
 import createError from 'http-errors';
 
-export const createReview = async (reviewData) => {
+export const createReview = async (userId,reviewData) => {
+  reviewData.reviewerId = userId
   try {
     const review = await Review.create(reviewData);
+    console.log(review)
     return review;
   } catch (error) {
     throw error;

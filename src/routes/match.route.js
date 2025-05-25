@@ -5,8 +5,8 @@ import { verifyToken } from '../middlewares/auth.js';
 const router = express.Router();
 
 router.post('/', verifyToken, matchController.createOrAcceptMatch);
-router.get('/confirmed/:userId', verifyToken, matchController.getConfirmedMatches);
-router.get('/pending/received/:userId', matchController.getReceivedPending);
+router.get('/confirmed', verifyToken, matchController.getConfirmedMatches);
+router.get('/pending/received',verifyToken, matchController.getReceivedPending);
 router.get('/pending/sent/:userId', matchController.getSentPending);
 router.post('/decline/:matchId', matchController.decline);
 router.post('/unmatch', verifyToken, matchController.unmatch);
