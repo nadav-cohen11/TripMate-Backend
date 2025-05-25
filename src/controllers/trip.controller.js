@@ -48,3 +48,13 @@ export const getAllTrips = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getNearbyEvents = async (req, res, next) => {
+  const { lat, lon, keyword } = req.query;
+  try {
+    const events = await TripService.fetchNearbyEvents(lat, lon, keyword);
+    res.status(HTTP.StatusCodes.OK).json(events);
+  } catch (error) {
+    next(error);
+  }
+};

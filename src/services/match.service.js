@@ -75,7 +75,6 @@ export const getPendingReceived = async (userId) => {
 
 export const getConfirmedMatches = async (userId) => {
   try {
-   logger.info(userId)
     const confirmedMatches = await Match.find({
       isBlocked:false,
       status: 'accepted',
