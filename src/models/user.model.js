@@ -3,6 +3,7 @@ import {
   TravelPreferencesSchema,
   GeoLocationSchema,
   SocialLinksSchema,
+  mediaSchema
 } from './sharedSchemas.model.js';
 
 const UserSchema = new mongoose.Schema({
@@ -23,11 +24,22 @@ const UserSchema = new mongoose.Schema({
   travelPreferences: TravelPreferencesSchema,
   adventureStyle: {
     type: String,
-    enum: ['Relaxed', 'Exploratory', 'Extreme', 'Photography'],
+    enum: ['Relaxed', 'Exploratory', 'Extreme', 'Photography', 'Cultural'],
     default: 'Exploratory',
   },
   bio: { type: String, maxlength: 100 },
-  photos: [{ type: String }],
+  photos: {
+    type: [mediaSchema],
+    default: [],
+  },
+  profilePhotoId: {
+    type: String,
+    default: null,
+  },
+  reels: {
+    type: [mediaSchema],
+    default: [],
+  },
   socialLinks: SocialLinksSchema,
   isDeleted: { type: Boolean, default: false },
 }, {
