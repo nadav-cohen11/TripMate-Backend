@@ -54,3 +54,9 @@ export const ParticipantSchema = new Schema({
   isConfirmed: { type: Boolean, default: true },
   joinedAt: { type: Date, default: Date.now },
 }, { _id: false });
+
+export const mediaSchema = new  Schema({
+  url: { type: String, required: true },
+  public_id: { type: String, required: true },
+  type: { type: String, enum: ['image', 'video'], required: true },
+}, { _id: false });

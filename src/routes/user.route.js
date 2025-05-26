@@ -8,12 +8,14 @@ router.get('/getUser', verifyToken, UserControllers.getUser);
 router.post('/register', UserControllers.register);
 router.post('/login', UserControllers.login);
 router.put('/updateUser', verifyToken, UserControllers.updateUser);
-router.delete('/:userId', UserControllers.deleteUser);
+
 router.get('/location', verifyToken, UserControllers.getUserLocation);
 router.get('/usersLocations', UserControllers.getUserLocations);
 router.get('/auth/check', verifyToken, (req, res) => {
     res.status(200).json({ userId: req.user.id });
 });
 
+router.get('/:userId', verifyToken, UserControllers.getUserById);
+router.delete('/:userId', verifyToken, UserControllers.deleteUser);
 
 export default router;

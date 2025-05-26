@@ -31,7 +31,7 @@ export const createUser = async (userData) => {
 
     const location = userData.location;
     
-    if (!isValidCoordinates(location)) {
+    if (!location) {
       throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid or missing location');
     }
 
@@ -40,9 +40,10 @@ export const createUser = async (userData) => {
       password: hashedPassword,
       location: {
         type: 'Point',
-        coordinates: location, 
+        coordinates: [location.coordinates[0], location.coordinates[1]],
       },
     });
+    
 
     const savedUser = await newUser.save();
     delete savedUser.password;

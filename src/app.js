@@ -7,9 +7,11 @@ import logger from './config/logger.js';
 import usersRoutes from './routes/user.route.js'
 import matchesRoutes from './routes/match.route.js';
 import errorHandler from './utils/errorHandler.js';
-import reviewsRoute from './routes/review.route.js'
-import tripsRoutes from './routes/trip.route.js'
-import messagesRoutes from './routes/message.route.js'
+import reviewsRoute from './routes/review.route.js';
+import tripsRoutes from './routes/trip.route.js';
+import messagesRoutes from './routes/message.route.js';
+import userPhotoRoutes from './routes/userPhoto.route.js';
+import qrRoutes from './routes/qr.routes.js';
 import cookieParser from 'cookie-parser';
 import * as dotenv from 'dotenv';
 
@@ -20,6 +22,7 @@ const app = express();
 const init = async () => {
     try {
         await connectDB();
+
         app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
         app.use(express.json());
         app.use(cookieParser());
@@ -29,9 +32,9 @@ const init = async () => {
         app.use('/api/matches', matchesRoutes);
         app.use('/api/trips', tripsRoutes);
         app.use('/api/reviews', reviewsRoute);
-        app.use('/api/messages', messagesRoutes)
-
-        
+        app.use('/api/messages', messagesRoutes);
+        app.use('/api/media', userPhotoRoutes);
+        app.use('/api/qr', qrRoutes);
         app.use(errorHandler)
 
         logger.info('app initialized');

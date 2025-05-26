@@ -49,6 +49,15 @@ export const getUser = async (req, res, next) => {
   }
 };
 
+export const getUserById = async (req, res, next) => {
+  try {
+    const user = await UserServices.getUser(req.params.userId);
+    res.status(HTTP.StatusCodes.OK).json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getUserLoggedIn = async (req, res, next) => {
   try {
     const userId = req.user.id
