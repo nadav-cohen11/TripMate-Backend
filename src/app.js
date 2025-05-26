@@ -22,7 +22,7 @@ const app = express();
 const init = async () => {
     try {
         await connectDB();
-
+        
         app.use(cors({  origin: process.env.FRONTEND_URL || '*' , credentials: true }));
         app.use(express.json());
         app.use(cookieParser());
