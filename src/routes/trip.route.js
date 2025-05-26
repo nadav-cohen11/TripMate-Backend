@@ -1,6 +1,5 @@
 import express from 'express';
 import * as TripController from '../controllers/trip.controller.js';
-
 const router = express.Router();
 
 router.post('/createTrip', TripController.createTrip);
