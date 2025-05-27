@@ -3,6 +3,7 @@ import createError from 'http-errors';
 import HTTP from '../constants/status.js';
 import User from '../models/user.model.js';
 import logger from '../config/logger.js';
+import mongoose from 'mongoose';
 
 export const createOrAcceptMatch = async (user1Id, user2Id, scores = {}) => {
   try {
@@ -42,6 +43,22 @@ export const createOrAcceptMatch = async (user1Id, user2Id, scores = {}) => {
   }
 };
 
+export const acceptMatch = async (matchId) => {
+  try {
+    const existingPendingMatch = await Match.findById(matchId);
+    if (existingPendingMatch) {
+      existingPendingMatch.status = 'accepted';
+      existingPendingMatch.matchedAt = new Date();
+      await existingPendingMatch.save();
+      return existingPendingMatch;
+    } else {
+      throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getAllMatches = async () => {
   try {
     const matches = await Match.find({})
@@ -64,7 +81,9 @@ export const getPendingReceived = async (userId) => {
       status: 'pending',
       isBlocked: false
     })
-      .populate({ path: 'user1Id', select: 'fullName photos' })
+      .populate({ path: 'user1Id', select: 'fullName photos bio gender adventureStyle ' })
+      .populate({ path: 'user2Id', select: 'fullName photos bio gender adventureStyle ' })
+
       .sort({ createdAt: -1 });
     if (!pendingReceived) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Pending matches not found')
     return pendingReceived;
@@ -112,7 +131,7 @@ export const declineMatch = async (matchId, userId) => {
     const match = await Match.findById(matchId);
     if (!match) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
     const userObjectId = new mongoose.Types.ObjectId(userId);
-    if (!match.user1Id.equals(userObjectId) && !match.user2Id.equals(userObjectId)) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Unauthorized to decline this match');
+    if (!match.user1Id.equals(userId) && !match.user2Id.equals(userId)) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Unauthorized to decline this match');
     match.status = 'declined';
     match.respondedAt = new Date();
     const savedMatch = await match.save();
@@ -136,14 +155,9 @@ export const unmatchUsers = async (user1Id, user2Id) => {
   }
 };
 
-export const blockMatch = async (user1Id, user2Id) => {
+export const blockMatch = async (matchId) => {
   try {
-    const match = await Match.findOne({
-      $or: [
-        { user1Id, user2Id },
-        { user1Id: user2Id, user2Id: user1Id },
-      ],
-    });
+    const match = await Match.findById(matchId);
     if (!match) {
       throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
     }

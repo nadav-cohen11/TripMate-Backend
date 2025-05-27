@@ -6,7 +6,6 @@ export const createReview = async (userId,reviewData) => {
   reviewData.reviewerId = userId
   try {
     const review = await Review.create(reviewData);
-    console.log(review)
     return review;
   } catch (error) {
     throw error;

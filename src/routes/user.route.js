@@ -4,6 +4,7 @@ import { verifyToken } from '../middlewares/auth.js';
 
 const router = express.Router();
 
+router.get('/getUser', verifyToken,UserControllers.getUser);
 router.post('/register', UserControllers.register);
 router.post('/login', UserControllers.login);
 router.put('/:userId',verifyToken, UserControllers.updateUser);

@@ -12,6 +12,17 @@ export const createOrAcceptMatch = async (req, res, next) => {
   }
 };
 
+export const acceptMatch = async (req, res, next) => {
+  try {
+    const { matchId } = req.body;
+    const match = await MatchServices.acceptMatch(matchId);
+
+    res.status(HTTP.StatusCodes.CREATED).json(match.status);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getConfirmedMatches = async (req, res, next) => {
   try {
     const confirmeMatches = await MatchServices.getConfirmedMatches(req.user.id);
@@ -50,8 +61,8 @@ export const getSentPending = async (req, res, next) => {
 
 export const decline = async (req, res, next) => {
   try {
-    const { matchId } = req.params
-    const result = await MatchServices.declineMatch(matchId, req.body.userId);
+    const { matchId } = req.body
+    const result = await MatchServices.declineMatch(matchId, req.user.id);
     res.status(HTTP.StatusCodes.OK).json(result);
   } catch (error) {
     next(error);
@@ -71,8 +82,8 @@ export const unmatch = async (req, res, next) => {
 
 export const block = async (req, res, next) => {
   try {
-    const { matchId } = req.params
-    const result = await MatchServices.blockMatch(matchId, req.body.userId);
+    const { matchId } = req.body
+    const result = await MatchServices.blockMatch(matchId);
     res.status(HTTP.StatusCodes.OK).json(result);
   } catch (error) {
     next(error);
