@@ -1,30 +1,40 @@
 import mongoose from 'mongoose';
 import { faker } from '@faker-js/faker';
 import dotenv from 'dotenv';
+import bcrypt from 'bcrypt';
+import cloudinary from 'cloudinary';
+import path from 'path';
 import User from '../src/models/user.model.js';
 import Trip from '../src/models/trip.model.js';
 import Match from '../src/models/match.model.js';
 import Review from '../src/models/review.model.js';
-import bcrypt from 'bcrypt'
+import logger from '../src/config/logger.js'
 
 dotenv.config();
 
-const NUM_USERS = 100;
-const NUM_TRIPS = 100;
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const NUM_USERS = 50;
+const NUM_TRIPS = 20;
 const NUM_REVIEWS = 100;
-const NUM_MATCHES = 1000;
+const NUM_MATCHES = 40;
 
 await mongoose.connect(process.env.MONGO_URI);
-console.log('Connected to DB');
+logger.info('✅ Connected to MongoDB');
 
 async function clearCollections() {
+  logger.info('\n🧹 Clearing collections...');
   await Promise.all([
     User.deleteMany({}),
     Trip.deleteMany({}),
     Review.deleteMany({}),
     Match.deleteMany({}),
   ]);
-  console.log('Cleared collections');
+  logger.info('✅ Collections cleared.');
 }
 
 function getRandomEnum(enumArray) {
@@ -35,18 +45,107 @@ function generateLocation() {
   return {
     type: 'Point',
     coordinates: [
-      faker.location.longitude(), 
-      faker.location.latitude()
-    ],    
+      faker.location.longitude({ max: 0, min: -0.127758 }),
+      faker.location.latitude({ max: 51.507351, min: 51 }),
+    ],
+    country: faker.location.country(),
+    city: faker.location.city(),
   };
 }
 
+async function uploadRandomImageToCloudinary() {
+  const imageUrl = faker.image.url();
+  logger.info(`🖼️ Uploading random image: ${imageUrl}`);
+
+  try {
+    const result = await cloudinary.v2.uploader.upload(imageUrl, {
+      folder: 'user-gallery',
+      transformation: [{ width: 600, height: 600, crop: 'fill' }],
+    });
+    logger.info('✅ Image uploaded:', result.secure_url);
+    return result.secure_url;
+  } catch (err) {
+    console.error('❌ Image upload failed:', err.message);
+    return null;
+  }
+}
+
+const sampleVideoPaths = [
+  '/Users/nadavcohen/DevProject2025/TripMate_Backend/TripMate-Backend/tests/SampleVideos/SampleVideo_360x240_30mb.mp4',
+  '/Users/nadavcohen/DevProject2025/TripMate_Backend/TripMate-Backend/tests/SampleVideos/SampleVideo_720x480_10mb.mp4',
+];
+
+async function uploadRandomVideoToCloudinary() {
+  const localPath = faker.helpers.arrayElement(sampleVideoPaths);
+  const fullPath = path.resolve(localPath);
+
+  logger.info('\n🎞️ [Uploading Video]');
+  logger.info('📍 Chosen file:', localPath);
+  logger.info('📍 Resolved path:', fullPath);
+
+  try {
+    const result = await cloudinary.v2.uploader.upload(fullPath, {
+      resource_type: 'video',
+      folder: 'user-reels',
+    });
+
+    logger.info('✅ Upload success:', {
+      url: result.secure_url,
+      public_id: result.public_id,
+      type: result.resource_type,
+    });
+
+    return {
+      url: result.secure_url,
+      public_id: result.public_id,
+      type: result.resource_type,
+    };
+  } catch (err) {
+    console.error('❌ Upload failed for video at:', fullPath);
+    console.error('Error name:', err.name);
+    console.error('Error message:', err.message);
+    console.error('Full error:', err);
+    return null;
+  }
+}
+
+async function uploadMultipleVideosToCloudinary() {
+  const videos = [];
+  const numVideos = faker.number.int({ min: 1, max: 3 });
+
+  for (let i = 0; i < numVideos; i++) {
+    const uploaded = await uploadRandomVideoToCloudinary();
+    if (uploaded) videos.push(uploaded);
+  }
+
+  return videos;
+}
+
 async function seedUsers() {
+  logger.info('\n👤 Seeding users...');
   const users = [];
 
   for (let i = 0; i < NUM_USERS; i++) {
+    logger.info(`\n--- Creating user ${i + 1} of ${NUM_USERS} ---`);
     const hashedPassword = await bcrypt.hash('123', 10);
-    users.push(new User({
+
+    const photos = await Promise.all([
+      uploadRandomImageToCloudinary(),
+      uploadRandomImageToCloudinary(),
+      uploadRandomImageToCloudinary(),
+    ]);
+    
+    const filteredPhotos = photos
+      .filter(Boolean)
+      .map((url) => ({
+        url,
+        public_id: new URL(url).pathname.slice(1),
+        type: 'image',
+      }));
+    
+    const reels = Math.random() < 0.5 ? await uploadMultipleVideosToCloudinary() : [];
+    
+    const user = new User({
       fullName: faker.person.fullName(),
       email: faker.internet.email().toLowerCase(),
       password: hashedPassword,
@@ -56,10 +155,12 @@ async function seedUsers() {
       location: generateLocation(),
       adventureStyle: getRandomEnum(['Relaxed', 'Exploratory', 'Extreme', 'Photography']),
       bio: faker.lorem.sentence(),
-      photos: Array.from({ length: 3 }, () => faker.image.avatar()),
+      photos: filteredPhotos,
+      profilePhoto: filteredPhotos.length > 0 ? filteredPhotos[0] : null,
+      reels,
       socialLinks: {
         instagram: `https://instagram.com/${faker.internet.username()}`,
-        facebook: `https://facebook.com/${faker.internet.username()}`
+        facebook: `https://facebook.com/${faker.internet.username()}`,
       },
       travelPreferences: {
         destinations: [faker.location.country()],
@@ -68,20 +169,22 @@ async function seedUsers() {
           end: faker.date.future(),
         },
         groupSize: faker.number.int({ min: 1, max: 10 }),
-        ageRange: {
-          min: 20,
-          max: 40,
-        },
+        ageRange: { min: 20, max: 40 },
         interests: faker.helpers.arrayElements(['hiking', 'food', 'culture', 'beach', 'music'], 3),
         travelStyle: getRandomEnum(['budget', 'luxury', 'adventure', 'cultural', 'nature', 'social']),
-      }
-    }));
+      },
+    });
+
+    users.push(user);
   }
 
-  return User.insertMany(users);
+  const inserted = await User.insertMany(users);
+  logger.info(`✅ Inserted ${inserted.length} users.`);
+  return inserted;
 }
 
 async function seedTrips(users) {
+  logger.info('\n🧳 Seeding trips...');
   const trips = [];
 
   for (let i = 0; i < NUM_TRIPS; i++) {
@@ -111,7 +214,7 @@ async function seedTrips(users) {
           }],
         },
       ],
-      participants: users.slice(0, 3).map((u) => ({
+      participants: users.slice(0, 3).map(u => ({
         userId: u._id,
         isConfirmed: faker.datatype.boolean(),
       })),
@@ -119,10 +222,13 @@ async function seedTrips(users) {
     }));
   }
 
-  return Trip.insertMany(trips);
+  const inserted = await Trip.insertMany(trips);
+  logger.info(`✅ Inserted ${inserted.length} trips.`);
+  return inserted;
 }
 
 async function seedReviews(users, trips) {
+  logger.info('\n✍️ Seeding reviews...');
   const reviews = [];
 
   for (let i = 0; i < NUM_REVIEWS; i++) {
@@ -143,10 +249,13 @@ async function seedReviews(users, trips) {
     }));
   }
 
-  return Review.insertMany(reviews);
+  const inserted = await Review.insertMany(reviews);
+  logger.info(`✅ Inserted ${inserted.length} reviews.`);
+  return inserted;
 }
 
-async function seedMatches(users, trips) {
+async function seedMatches(users) {
+  logger.info('\n💘 Seeding matches...');
   const matches = [];
 
   for (let i = 0; i < NUM_MATCHES; i++) {
@@ -168,22 +277,27 @@ async function seedMatches(users, trips) {
     }));
   }
 
-  return Match.insertMany(matches);
+  const inserted = await Match.insertMany(matches);
+  logger.info(`✅ Inserted ${inserted.length} matches.`);
+  return inserted;
 }
 
 async function main() {
-  await clearCollections();
+  try {
+    await clearCollections();
 
-  const users = await seedUsers();
-  const trips = await seedTrips(users);
-  await seedReviews(users, trips);
-  await seedMatches(users, trips);
+    const users = await seedUsers();
+    const trips = await seedTrips(users);
+    await seedReviews(users, trips);
+    await seedMatches(users);
 
-  console.log('Seed completed.');
-  process.exit();
+    logger.info('\n🌱 All data seeded successfully.');
+  } catch (err) {
+    console.error('\n❌ Error in main seeding process:', err);
+  } finally {
+    await mongoose.disconnect();
+    process.exit();
+  }
 }
 
-main().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+main();

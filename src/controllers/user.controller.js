@@ -6,7 +6,6 @@ export const login = async (req, res, next) => {
   try {
     const { email, password, location } = req.body;
     const user = await UserServices.login(email, password, location);
-
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.cookie('token', token, {
       httpOnly: true,
@@ -24,23 +23,35 @@ export const register = async (req, res, next) => {
   try {
     const user = await UserServices.createUser(req.body);
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
+
     res.cookie('token', token, {
       httpOnly: true,
       secure: false,
       sameSite: 'strict',
       maxAge: 3600000,
     });
-    res.status(HTTP.StatusCodes.CREATED).json({ message: 'Registration successful', id: user.id });
+
+    res.status(HTTP.StatusCodes.CREATED).json({ message: 'Registration successful', id: user._id });
   } catch (error) {
     next(error);
   }
 };
 
-
 export const getUser = async (req, res, next) => {
   try {
     const user = await UserServices.getUser(req.user.id);
+    res.status(HTTP.StatusCodes.OK).json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUserById = async (req, res, next) => {
+  try {
+    const user = await UserServices.getUser(req.params.userId);
     res.status(HTTP.StatusCodes.OK).json(user);
   } catch (error) {
     next(error);
