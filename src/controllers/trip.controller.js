@@ -20,6 +20,7 @@ export const getTrip = async (req, res, next) => {
   }
 };
 
+
 export const updateTrip = async (req, res, next) => {
   try {
     const { tripId } = req.params;
@@ -58,3 +59,4 @@ export const getNearbyEvents = async (req, res, next) => {
     next(error);
   }
 };
+

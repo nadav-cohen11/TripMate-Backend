@@ -34,6 +34,64 @@ export const getTrip = async (tripId) => {
   }
 };
 
+export const getTripSuggestion = async (tripId) => {
+  try {
+    if (!tripId) throw new Error('Trip ID is required');
+    const trip = await getTrip(tripId);
+    if (!trip || !trip.destination) {
+      throw new Error('Trip or trip destination not found');
+    }
+    const { country, city } = trip.destination;
+    if (!country || typeof country !== 'string' || !country.trim()) {
+      throw new Error('Trip destination country is required and must be a non-empty string');
+    }
+    if (!city || typeof city !== 'string' || !city.trim()) {
+      throw new Error('Trip destination city is required and must be a non-empty string');
+    }
+    const geocodeUrl = `https://nominatim.openstreetmap.org/search`;
+    const geocodeParams = {
+      country,
+      city,
+      format: 'json',
+      limit: 1,
+    };
+    const geocodeResponse = await axios.get(geocodeUrl, { params: geocodeParams });
+    if (!Array.isArray(geocodeResponse.data) || !geocodeResponse.data.length) {
+      throw new Error('Could not geocode city and country');
+    }
+    const { lat, lon } = geocodeResponse.data[0];
+    if (!lat || !lon) {
+      throw new Error('Geocoding did not return valid coordinates');
+    }
+    const keyword = 'beach';
+    const radius = 10000;
+
+    if (!process.env.OPENTRIPMAP_API_KEY) {
+      throw new Error('OpenTripMap API key is missing');
+    }
+
+    const url = `https://api.opentripmap.com/0.1/en/places/autosuggest`;
+    const params = {
+      name: keyword,
+      radius,
+      lon,
+      lat,
+      apikey: process.env.OPENTRIPMAP_API_KEY,
+    };
+
+    const response = await axios.get(url, { params });
+    if (!response.data || !Array.isArray(response.data.features) || !response.data.features.length) {
+      throw new Error('No suggestions found for the given location');
+    }
+    const features = response.data.features;
+    const shuffeled = shuffle(features);
+    return shuffeled[0].properties;
+  } catch (error) {
+    throw error;
+  }
+}
+
+
 export const updateTrip = async (tripId, tripData) => {
   try {
     if (!tripId) throw new Error('Trip ID is required');
@@ -105,3 +163,12 @@ export const fetchNearbyEvents = async (lat, lon, keyword) => {
     throw error;
   }
 };
+
+
+const shuffle = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
