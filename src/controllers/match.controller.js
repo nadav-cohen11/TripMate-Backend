@@ -12,10 +12,21 @@ export const createOrAcceptMatch = async (req, res, next) => {
   }
 };
 
+export const acceptMatch = async (req, res, next) => {
+  try {
+    const { matchId } = req.body;
+    const match = await MatchServices.acceptMatch(matchId);
+
+    res.status(HTTP.StatusCodes.CREATED).json(match.status);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getConfirmedMatches = async (req, res, next) => {
   try {
     const confirmeMatches = await MatchServices.getConfirmedMatches(req.user.id);
-    res.status(HTTP.StatusCodes.OK).json(confirmeMatches);
+    res.status(HTTP.StatusCodes.OK).json({matches:confirmeMatches,userId:req.user.id});
   } catch (error) {
     next(error);
   }
@@ -32,8 +43,7 @@ export const getAllMatches = async (req, res, next) => {
 
 export const getReceivedPending = async (req, res, next) => {
   try {
-    const { userId } = req.params;
-    const matches = await MatchServices.getPendingReceived(userId);
+    const matches = await MatchServices.getPendingReceived(req.user.id);
     res.status(HTTP.StatusCodes.OK).json(matches);
   } catch (error) {
     next(error);
@@ -51,8 +61,8 @@ export const getSentPending = async (req, res, next) => {
 
 export const decline = async (req, res, next) => {
   try {
-    const { matchId } = req.params
-    const result = await MatchServices.declineMatch(matchId, req.body.userId);
+    const { matchId } = req.body
+    const result = await MatchServices.declineMatch(matchId, req.user.id);
     res.status(HTTP.StatusCodes.OK).json(result);
   } catch (error) {
     next(error);
@@ -72,8 +82,8 @@ export const unmatch = async (req, res, next) => {
 
 export const block = async (req, res, next) => {
   try {
-    const { matchId } = req.params
-    const result = await MatchServices.blockMatch(matchId, req.body.userId);
+    const { matchId } = req.body
+    const result = await MatchServices.blockMatch(matchId);
     res.status(HTTP.StatusCodes.OK).json(result);
   } catch (error) {
     next(error);

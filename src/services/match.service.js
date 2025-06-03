@@ -3,6 +3,7 @@ import createError from 'http-errors';
 import HTTP from '../constants/status.js';
 import User from '../models/user.model.js';
 import logger from '../config/logger.js';
+import mongoose from 'mongoose';
 
 export const createOrAcceptMatch = async (user1Id, user2Id, scores = {}) => {
   try {
@@ -42,6 +43,22 @@ export const createOrAcceptMatch = async (user1Id, user2Id, scores = {}) => {
   }
 };
 
+export const acceptMatch = async (matchId) => {
+  try {
+    const existingPendingMatch = await Match.findById(matchId);
+    if (existingPendingMatch) {
+      existingPendingMatch.status = 'accepted';
+      existingPendingMatch.matchedAt = new Date();
+      await existingPendingMatch.save();
+      return existingPendingMatch;
+    } else {
+      throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getAllMatches = async () => {
   try {
     const matches = await Match.find({})
@@ -62,9 +79,11 @@ export const getPendingReceived = async (userId) => {
     const pendingReceived = await Match.find({
       user2Id: userId,
       status: 'pending',
+      isBlocked: false
     })
-      .populate({ path: 'user1Id', select: 'fullName photos' })
-      .populate({ path: 'tripId', select: 'tripName date' })
+      .populate({ path: 'user1Id', select: 'fullName photos bio gender adventureStyle ' })
+      .populate({ path: 'user2Id', select: 'fullName photos bio gender adventureStyle ' })
+
       .sort({ createdAt: -1 });
     if (!pendingReceived) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Pending matches not found')
     return pendingReceived;
@@ -76,13 +95,14 @@ export const getPendingReceived = async (userId) => {
 export const getConfirmedMatches = async (userId) => {
   try {
     const confirmedMatches = await Match.find({
-      isBlocked:false,
+      isBlocked: false,
       status: 'accepted',
       $or: [{ user1Id: userId }, { user2Id: userId }],
     })
-      .populate({ path: 'user1Id', select: 'fullName photos bio gender adventureStyle ' })
+      .populate({ path: 'user1Id', select: 'fullName bio gender adventureStyle photos' })
       .populate({ path: 'user2Id', select: 'fullName photos bio gender adventureStyle ' })
       .sort({ respondedAt: -1 }).limit(0);
+
     if (!confirmedMatches) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Confirmed matches not found');
     return confirmedMatches;
   } catch (error) {
@@ -111,7 +131,7 @@ export const declineMatch = async (matchId, userId) => {
     const match = await Match.findById(matchId);
     if (!match) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
     const userObjectId = new mongoose.Types.ObjectId(userId);
-    if (!match.user1Id.equals(userObjectId) && !match.user2Id.equals(userObjectId)) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Unauthorized to decline this match');
+    if (!match.user1Id.equals(userId) && !match.user2Id.equals(userId)) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Unauthorized to decline this match');
     match.status = 'declined';
     match.respondedAt = new Date();
     const savedMatch = await match.save();
@@ -135,16 +155,11 @@ export const unmatchUsers = async (user1Id, user2Id) => {
   }
 };
 
-export const blockMatch = async (user1Id, user2Id) => {
+export const blockMatch = async (matchId) => {
   try {
-    const match = await Match.findOne({
-      $or: [
-        { user1Id, user2Id },
-        { user1Id: user2Id, user2Id: user1Id },
-      ],
-    });
+    const match = await Match.findById(matchId);
     if (!match) {
-      throw createError(HTTP.StatusCodes.NOT_FOUND,'Match not found');
+      throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
     }
     match.isBlocked = true;
     return await match.save();
@@ -169,8 +184,8 @@ export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters) => {
     }).distinct('user2Id');
 
     const excludedUserIds = [...new Set([...matchedUserIds, ...pendingSentUserIds, userId])];
-  
-    const currentUserLocation = await User.findById( userId );
+
+    const currentUserLocation = await User.findById(userId);
 
     if (!currentUserLocation) throw createError(HTTP.StatusCodes.NOT_FOUND, 'User location not found');
 
@@ -185,7 +200,7 @@ export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters) => {
     });
 
     const nearbyUserIds = nearbyUserLocations.map((loc) => loc._id.toString());
-    
+
     const nonMatchedNearbyUsers = await User.find({
       _id: { $in: nearbyUserIds },
     }).select('-password -isDeleted -createdAt -updatedAt');
@@ -193,7 +208,7 @@ export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters) => {
     if (nonMatchedNearbyUsers.length === 0) {
       throw createError(HTTP.StatusCodes.NOT_FOUND, 'No nearby users found');
     }
-    
+
     const filteredUsers = nonMatchedNearbyUsers.filter(
       (user) => user._id.toString() !== userId.toString()
     );

@@ -8,7 +8,6 @@ router.get('/getUser', verifyToken, UserControllers.getUser);
 router.post('/register', UserControllers.register);
 router.post('/login', UserControllers.login);
 router.put('/updateUser', verifyToken, UserControllers.updateUser);
-
 router.get('/location', verifyToken, UserControllers.getUserLocation);
 router.get('/usersLocations', UserControllers.getUserLocations);
 router.get('/auth/check', verifyToken, (req, res) => {

@@ -3,8 +3,7 @@ import HTTP from '../constants/status.js';
 
 export const createReview = async (req, res, next) => {
   try {
-
-    const review = await ReviewService.createReview(req.body)
+    const review = await ReviewService.createReview(req.user.id,req.body)
     return res.status(HTTP.StatusCodes.CREATED).json(review);
   } catch (error) {
     next(error);
