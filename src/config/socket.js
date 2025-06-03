@@ -114,8 +114,8 @@ export const initSocket = (server) => {
         });
         callback({ chat })
       } catch (err) {
-        console.error('Error in createTrip:', err);
-        callback({ chat: null });
+        console.error('Error in createTrip:', err.message);
+        callback({ chat: null, error: err.message });
       }
     })
 
