@@ -18,10 +18,10 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const NUM_USERS = 50;
-const NUM_TRIPS = 20;
-const NUM_REVIEWS = 100;
-const NUM_MATCHES = 40;
+const NUM_USERS = 10;
+const NUM_TRIPS = 7;
+const NUM_REVIEWS = 25;
+const NUM_MATCHES = 3;
 
 await mongoose.connect(process.env.MONGO_URI);
 logger.info('✅ Connected to MongoDB');

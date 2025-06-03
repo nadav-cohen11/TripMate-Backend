@@ -56,3 +56,57 @@ export const getAllReels = async (req, res, next) => {
     next(err);
   }
 };
+
+export const addComment = async (req, res, next) => {
+  console.log(req.body)
+  const { reelId, text } = req.body;
+  const userId = req.user.id;
+  try {
+    const updatedUser = await UserPhotoServices.addComment(userId, reelId, text);
+    res.status(HTTP.StatusCodes.OK).json({ updatedUser });
+  } catch (error) {
+    next(error)
+  }
+};
+
+export const addLike = async (req, res,next) => {
+  const { reelId } = req.body;
+  const userId = req.user.id;
+  try {
+    const updatedUser = await UserPhotoServices.addLike(userId, reelId);
+    res.status(HTTP.StatusCodes.OK).json({ updatedUser });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removeLike = async (req, res, next) => {
+  const { reelId } = req.body;
+  const userId = req.user.id;
+  try {
+    const updatedUser = await UserPhotoServices.removeLike(userId, reelId);
+    res.status(HTTP.StatusCodes.OK).json({ updatedUser });
+  } catch (error) {
+    next(error)
+  }
+};
+
+export const getReelLikesCount = async (req, res, next) => {
+  const { reelId } = req.params;
+  try {
+    const count = await UserPhotoServices.getReelLikesCount(reelId);
+    res.status(HTTP.StatusCodes.OK).json({ likesCount: count });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getReelComments = async (req, res, next) => {
+  const { reelId } = req.params;
+  try {
+    const comments = await UserPhotoServices.getReelComments(reelId);
+    res.status(HTTP.StatusCodes.OK).json({ comments });
+  } catch (error) {
+    next(error);
+  }
+};

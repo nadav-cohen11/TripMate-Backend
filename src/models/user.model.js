@@ -3,7 +3,8 @@ import {
   TravelPreferencesSchema,
   GeoLocationSchema,
   SocialLinksSchema,
-  mediaSchema
+  mediaSchema,
+  reelSchema
 } from './sharedSchemas.model.js';
 
 const UserSchema = new mongoose.Schema({
@@ -37,7 +38,7 @@ const UserSchema = new mongoose.Schema({
     default: null,
   },
   reels: {
-    type: [mediaSchema],
+    type: [reelSchema],
     default: [],
   },
   socialLinks: SocialLinksSchema,

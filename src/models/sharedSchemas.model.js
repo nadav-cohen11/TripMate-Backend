@@ -60,3 +60,22 @@ export const mediaSchema = new  Schema({
   public_id: { type: String, required: true },
   type: { type: String, enum: ['image', 'video'], required: true },
 }, { _id: false });
+
+export const commentSchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  text: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+}, { _id: true });
+
+export const likeSchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  likedAt: { type: Date, default: Date.now }
+}, { _id: true });
+
+export const reelSchema = new Schema({
+  url: { type: String, required: true },
+  public_id: { type: String, required: true },
+  type: { type: String, enum: ['image', 'video'], required: true },
+  comments: { type: [commentSchema], default: [] },
+  likes: { type: [likeSchema], default: [] },
+}, { _id: true });

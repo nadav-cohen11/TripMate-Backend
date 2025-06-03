@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import HTTP from '../constants/status.js';
 import User from '../models/user.model.js';
 import cloudinary from '../config/cloudinary.js';
+import mongoose from 'mongoose';
 
 const formatUploadedFile = (file) => {
   if (!file?.path || !file?.filename || !file?.mimetype) {
@@ -138,10 +139,121 @@ export const setProfilePhoto = async (userId, publicId) => {
 
 export const getAllReels = async () => {
   try {
-    const users = await User.find({ 'reels': { $exists: true } });
-    const reels = users.flatMap(user => user.reels);
+    const users = await User.find({ 'reels.0': { $exists: true } });
+
+    const reels = users.flatMap(user => {
+      const profilePhoto = user.photos.find(photo =>
+        photo.public_id.includes(user.profilePhotoId)
+      );
+      console.log({
+  fullName: user.fullName,
+  profilePhotoId: user.profilePhotoId,
+  photos: user.photos,
+  matchedPhoto: profilePhoto?.url,
+});
+
+      return user.reels.map(reel => ({
+        ...reel.toObject(),
+        userFullName: user.fullName,
+        userProfilePhotoUrl: profilePhoto?.url || null,
+      }));
+    });
+
     return reels;
   } catch (error) {
     throw createError(HTTP.StatusCodes.INTERNAL_SERVER_ERROR, error.message);
   }
+};
+
+export const addComment = async (userId, reelId, text) => {
+  const user = await User.findOne({ 'reels._id': reelId });
+
+  if (!user) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found');
+
+  const reel = user.reels.id(reelId);
+  if (!reel) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found inside user');
+
+  const comment = {
+    userId: new mongoose.Types.ObjectId(userId),
+    text,
+  };
+
+  reel.comments.push(comment);
+
+  await user.save();
+
+  const userInfo = await User.findById(userId).select('fullName');
+
+  return {
+    comment: {
+      userId: {
+        _id: userInfo._id,
+        fullName: userInfo.fullName,
+      },
+      text: comment.text,
+    }
+  };  
+};  
+
+export const addLike = async (userId, reelId) => {
+  const user = await User.findOne({ 'reels._id': reelId })
+  .populate('reels.likes.userId', 'fullName');
+
+  if (!user) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found');
+
+  const reel = user.reels.id(reelId);
+  if (!reel) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found inside user');
+
+  const alreadyLiked = reel.likes.some((like) => like.userId.toString() === userId);
+  if (alreadyLiked) throw createError(HTTP.StatusCodes.NOT_FOUND, 'User already liked this reel');
+
+  reel.likes.push({ userId: new mongoose.Types.ObjectId(userId) });
+
+  await user.save();
+
+  return reel.likes.map((like) => ({
+    userId: like.userId.toString(),
+    fullName: like.userId.fullName,
+  }));
+};
+
+export const removeLike = async (userId, reelId) => {
+  const user = await User.findOne({ 'reels._id': reelId })
+  .populate('fullName');
+
+  if (!user) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found');
+
+  const reel = user.reels.id(reelId);
+  if (!reel) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found inside user');
+
+  reel.likes = reel.likes.filter(
+    (like) => like.userId.toString() !== userId
+  );
+
+  await user.save();
+  return user;
+};
+
+
+export const getReelLikesCount = async (reelId) => {
+  const user = await User.findOne({ 'reels._id': reelId })
+
+  if (!user) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found');
+
+  const reel = user.reels.id(reelId);
+  if (!reel) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found inside user');
+
+  return reel.likes.length;
+};
+
+export const getReelComments = async (reelId) => {
+  const user = await User.findOne({ 'reels._id': reelId })
+  .populate('reels.comments.userId', 'fullName');
+
+  if (!user) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found');
+
+  const reel = user.reels.id(reelId);
+  if (!reel) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found inside user');
+
+  return reel.comments;
 };
