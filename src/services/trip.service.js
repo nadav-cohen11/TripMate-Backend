@@ -50,7 +50,6 @@ export const deleteTrip = async (tripId) => {
     return await Trip.findByIdAndDelete(tripId);
   } catch (error) {
     throw error;
-    throw error;
   }
 };
 

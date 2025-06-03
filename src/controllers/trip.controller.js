@@ -49,6 +49,15 @@ export const getAllTrips = async (req, res, next) => {
   }
 };
 
+export const getAllTripsForUser = async (req, res, next) => {
+  try {
+    const trips = await TripService.getAllTrips({ 'participants.userId': req.user.id });
+    res.status(HTTP.StatusCodes.OK).json(trips);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getNearbyEvents = async (req, res, next) => {
   const { lat, lon, keyword } = req.query;
   try {
