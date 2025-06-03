@@ -9,6 +9,13 @@ const validateTripData = (tripData) => {
 
 export const createTrip = async (tripData) => {
   try {
+    const { start, end } = tripData.travelDates
+    const participantIds = tripData.participants.map(p => p._id);
+    const conflictsIds = await checkTripsConflicts(participantIds, start, end);
+    if (conflictsIds) {
+      const names = conflictsIds.map(p => p.fullName).join(', ');
+      throw new Error(`The following participants have conflicting trips during the selected dates: ${names}`);
+    }
     validateTripData(tripData);
     tripData.participants = tripData.participants.map(participant => {
       if (participant._id && !participant.userId) {
@@ -24,6 +31,36 @@ export const createTrip = async (tripData) => {
     throw error;
   }
 };
+
+const checkTripsConflicts = async (participantIds, start, end) => {
+  const trips = await getAllTrips({
+    'participants.userId': {
+      $in: participantIds
+    }
+  });
+
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  for (const trip of trips) {
+    const tripStart = new Date(trip.travelDates.start);
+    const tripEnd = new Date(trip.travelDates.end);
+
+    if (
+      (startDate <= tripEnd && endDate >= tripStart)
+    ) {
+      const simplified = trip.participants.map(p => ({
+        _id: p.userId._id,
+        fullName: p.userId.fullName
+      }));
+      
+      const filtered = simplified.filter((p) => participantIds.map(id => id.toString()).includes(p._id.toString()))
+      
+      return filtered
+    }
+  }
+  return null;
+}
 
 export const getTrip = async (tripId) => {
   try {
