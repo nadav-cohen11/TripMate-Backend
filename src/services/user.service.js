@@ -42,6 +42,10 @@ export const createUser = async (userData) => {
         type: 'Point',
         coordinates: [location.coordinates[0], location.coordinates[1]],
       },
+      socialLinks: {
+        instagram: userData.instagram || '',
+        facebook: userData.facebook || '',
+      },
     });
     
 
