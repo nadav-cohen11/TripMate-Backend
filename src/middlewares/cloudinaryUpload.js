@@ -55,7 +55,6 @@ const fileFilter = (req, file, cb) => {
     }
     return cb(null, true);
   }
-  console.log("Uploading file for field:", file.fieldname);
 
   if ((file.fieldname === 'profile' || file.fieldname === 'photos') && isImage) return cb(null, true);
 

@@ -58,7 +58,6 @@ export const getAllReels = async (req, res, next) => {
 };
 
 export const addComment = async (req, res, next) => {
-  console.log(req.body)
   const { reelId, text } = req.body;
   const userId = req.user.id;
   try {

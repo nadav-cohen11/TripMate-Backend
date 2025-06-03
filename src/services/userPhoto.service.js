@@ -55,7 +55,6 @@ export const uploadProfilePhoto = async (userId, file) => {
   user.photos ??= [];
   user.photos.push(photo);
   user.profilePhotoId = photo.public_id;
-  console.log(user)
   await user.save();
   return photo;
 };
@@ -145,13 +144,6 @@ export const getAllReels = async () => {
       const profilePhoto = user.photos.find(photo =>
         photo.public_id.includes(user.profilePhotoId)
       );
-      console.log({
-  fullName: user.fullName,
-  profilePhotoId: user.profilePhotoId,
-  photos: user.photos,
-  matchedPhoto: profilePhoto?.url,
-});
-
       return user.reels.map(reel => ({
         ...reel.toObject(),
         userFullName: user.fullName,
