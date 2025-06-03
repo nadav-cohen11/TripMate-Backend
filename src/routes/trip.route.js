@@ -11,4 +11,5 @@ router.put('/:tripId', TripController.updateTrip);
 router.delete('/:tripId', TripController.deleteTrip);
 router.get('/', TripController.getAllTrips);
 
+
 export default router;

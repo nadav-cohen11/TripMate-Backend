@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import * as ChatServices from '../services/chat.service.js';
 import * as MatchServices from '../services/match.service.js';
 import * as TripServices from '../services/trip.service.js';
+import cron from 'node-cron';
 
 export const initSocket = (server) => {
   const io = new Server(server, {
@@ -10,9 +11,33 @@ export const initSocket = (server) => {
       credentials: true
     }
   });
-  
+
 
   const onlineUsers = new Map();
+
+  cron.schedule('00 09 * * *', async () => {
+    try {
+      const groupChats = await ChatServices.getGroupChats();
+      for (const g of groupChats) {
+        try {
+          const suggestion = await TripServices.getTripSuggestion(g.tripId);
+          const distKm = (suggestion.dist / 1000).toFixed(1);
+          const msg = {
+            content: `How about visiting ${suggestion.name} today? It's a great spot to explore! It's about ${distKm} km away from you.`
+          }
+          const message = await ChatServices.createMessage(g._id, null, msg)
+          io.to(g._id.toString()).emit('messageReceived', message)
+        } catch (err) {
+          continue;
+        }
+      }
+    } catch (error) {
+      console.error('[getTripSuggestions] Error:', err);
+      throw error
+    }
+  }, {
+    timezone: 'Asia/Jerusalem'
+  });
 
   io.on('connection', (socket) => {
     socket.on('setup', (userId) => {

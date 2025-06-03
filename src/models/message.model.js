@@ -6,7 +6,7 @@ export const MessageSchema = new Schema({
   sender: {
     type: Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: false,
     index: true,
   },
   chatId: {

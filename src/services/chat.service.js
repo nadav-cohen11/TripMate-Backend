@@ -4,8 +4,8 @@ import * as TripServices from './trip.service.js';
 
 export const createMessage = async (room, sender, msg) => {
   try {
+
     if (!room) throw new Error('Room (chatId) is required');
-    if (!sender) throw new Error('Sender is required');
     if (!msg || !msg.content) throw new Error('Message content is required');
 
     const chat = await Chat.findById(room);
@@ -16,6 +16,7 @@ export const createMessage = async (room, sender, msg) => {
       content: msg.content,
       sender: sender
     });
+
     await Chat.findByIdAndUpdate(
       room,
       { $push: { messages: message } },
@@ -73,7 +74,7 @@ export const createGroupChat = async (participants, chatName, tripId) => {
 
 export const getChat = async (chatId) => {
   try {
-    if (!chatId) { 
+    if (!chatId) {
       throw new Error('Chat ID is required');
     }
     const chat = await Chat.findById(chatId)
@@ -150,3 +151,8 @@ export const deleteUserFromGroup = async (chatId, userId) => {
     throw error;
   }
 };
+
+export const getGroupChats = async () => {
+  const groupChats = await Chat.find({ isGroupChat: true });
+  return groupChats;
+}
