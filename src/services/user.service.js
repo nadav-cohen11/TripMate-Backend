@@ -30,7 +30,7 @@ export const createUser = async (userData) => {
     const hashedPassword = await bcrypt.hash(userData.password, salt);
 
     const location = userData.location;
-    
+
     if (!location) {
       throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid or missing location');
     }
@@ -47,7 +47,7 @@ export const createUser = async (userData) => {
         facebook: userData.facebook || '',
       },
     });
-    
+
 
     const savedUser = await newUser.save();
     delete savedUser.password;
@@ -67,7 +67,7 @@ export const deleteUser = async (userId) => {
   }
 }
 
-export const updateUser = async (userId, {userData}) => {
+export const updateUser = async (userId, { userData }) => {
   try {
     const userToUpdate = await User.findById(userId)
     userData.location.coordinates = userToUpdate.location.coordinates
@@ -99,7 +99,7 @@ export const getAllUsers = async () => {
 }
 
 export const updateUserLocation = async (userId, latitude, longitude) => {
-  if ( !latitude || !longitude || typeof latitude !== 'number' || typeof longitude !== 'number' ||  latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+  if (!latitude || !longitude || typeof latitude !== 'number' || typeof longitude !== 'number' || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
     throw createError(HTTP.StatusCodes.NOT_FOUND, 'Invalid coordinates');
   }
   return await User.findOneAndUpdate(
@@ -134,3 +134,12 @@ export const getUsersLocations = async () => {
   }
 };
 
+export const getUserByEmail = async (email) => {
+  try {
+    const user = await User.findOne({ email })
+    if (user) return user
+    return null
+  } catch (error) {
+    throw error
+  }
+}

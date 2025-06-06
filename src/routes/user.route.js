@@ -9,6 +9,7 @@ router.post('/register', UserControllers.register);
 router.post('/login', UserControllers.login);
 router.put('/updateUser', verifyToken, UserControllers.updateUser);
 router.get('/location', verifyToken, UserControllers.getUserLocation);
+router.get('/getUserByEmail', UserControllers.getUserByEmail);
 router.get('/usersLocations', UserControllers.getUserLocations);
 router.get('/auth/check', verifyToken, (req, res) => {
     res.status(200).json({ userId: req.user.id });
