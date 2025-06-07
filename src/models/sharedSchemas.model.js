@@ -76,6 +76,7 @@ export const reelSchema = new Schema({
   url: { type: String, required: true },
   public_id: { type: String, required: true },
   type: { type: String, enum: ['image', 'video'], required: true },
+  tripId: { type: Schema.Types.ObjectId, ref: 'Trip', required: false },
   comments: { type: [commentSchema], default: [] },
   likes: { type: [likeSchema], default: [] },
 }, { _id: true });

@@ -21,7 +21,7 @@ export const handleUploadProfilePhoto = async (req, res, next) => {
 
 export const handleUploadReel = async (req, res, next) => {
   try {
-    const reels = await UserPhotoServices.uploadUserReel(req.user.id, req.file);
+    const reels = await UserPhotoServices.uploadUserReel(req.user.id, req.file, req.body.tripId, req.body.firstComment);
     res.status(HTTP.StatusCodes.OK).json({ reels });
   } catch (err) {
     next(err);
@@ -30,7 +30,7 @@ export const handleUploadReel = async (req, res, next) => {
 
 export const handleDeletePhoto = async (req, res, next) => {
   try {
-    const publicId = decodeURIComponent(req.query.publicId);
+    const publicId = decodeURIComponent(req.body.publicId);
     const photos = await UserPhotoServices.deleteGalleryPhoto(req.user.id, publicId);
     res.status(HTTP.StatusCodes.OK).json({ photos });
   } catch (err) {
