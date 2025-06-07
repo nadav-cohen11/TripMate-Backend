@@ -151,7 +151,23 @@ export const deleteTrip = async (tripId) => {
 export const getAllTrips = async (filter = {}) => {
   try {
     if (typeof filter !== 'object') throw new Error('Filter must be an object');
-    return await Trip.find(filter).populate('host participants.userId');
+    const trips = await Trip.find(filter).populate('participants.userId');
+    return trips.map(trip => ({
+      tripId: trip._id,
+      destination: {
+        country: trip.destination.country,
+        city: trip.destination.city,
+      },
+      travelDates: {
+        start: trip.travelDates.start,
+        end: trip.travelDates.end,
+      },
+      participants: trip.participants.map(participant => ({
+        userId: {
+          _id: participant.userId._id,
+        },
+      })),
+    }));
   } catch (error) {
     throw error;
   }

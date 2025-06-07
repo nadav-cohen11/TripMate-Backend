@@ -59,10 +59,20 @@ export const uploadProfilePhoto = async (userId, file) => {
   return photo;
 };
 
-export const uploadUserReel = async (userId, file) => {
+export const uploadUserReel = async (userId, file, tripId, firstComment) => {
   if (!file) {
     throw createError(HTTP.StatusCodes.BAD_REQUEST, 'No file uploaded');
   }
+
+  if (!tripId) {
+    throw createError(HTTP.StatusCodes.BAD_REQUEST, 'No trip provided');
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(tripId)) {
+    throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid tripId');
+  }
+
+  const tripObjectId = new mongoose.Types.ObjectId(tripId);
 
   const user = await getUserOrThrow(userId);
   const reel = formatUploadedFile(file);
@@ -71,9 +81,20 @@ export const uploadUserReel = async (userId, file) => {
     throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid reel format');
   }
 
+  reel.tripId = tripObjectId;
+
+
   user.reels ??= [];
   user.reels.push(reel);
 
+  if (firstComment) {
+    reel.comments = [{
+      userId: new mongoose.Types.ObjectId(userId),
+      text: firstComment.trim(),
+    }];
+  } else {
+    reel.comments = [];
+  }
   await user.save();
   return user.reels;
 };
@@ -147,6 +168,7 @@ export const getAllReels = async () => {
       return user.reels.map(reel => ({
         ...reel.toObject(),
         userFullName: user.fullName,
+        userId: user._id.toString(),
         userProfilePhotoUrl: profilePhoto?.url || null,
       }));
     });

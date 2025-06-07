@@ -11,22 +11,22 @@ const storage = new CloudinaryStorage({
   params: async (req, file) => {
     const fieldToConfig = {
       profile: {
-        folder: 'user-profile',
-        transformation: [{ width: 500, height: 500, crop: 'limit' }],
-        resource_type: 'image',
-        allowed_formats: ['jpg', 'jpeg', 'png'],
+      folder: 'user-profile',
+      transformation: [{ width: 500, height: 500, crop: 'limit' }],
+      resource_type: 'image',
+      allowed_formats: ['jpg', 'jpeg', 'png'],
       },
       photos: {
-        folder: 'user-gallery',
-        transformation: [{ width: 1024, height: 1024, crop: 'limit' }],
-        resource_type: 'image',
-        allowed_formats: ['jpg', 'jpeg', 'png'],
+      folder: 'user-gallery',
+      transformation: [{ width: 1024, height: 1024, crop: 'limit' }],
+      resource_type: 'image',
+      allowed_formats: ['jpg', 'jpeg', 'png'],
       },
       reel: {
-        folder: 'user-reels',
-        transformation: [],
-        resource_type: 'video',
-        allowed_formats: ['mp4', 'mov', 'avi'],
+      folder: 'user-reels',
+      transformation: [],
+      resource_type: 'auto',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'mp4', 'mov', 'avi'],
       },
     };
   
@@ -49,7 +49,6 @@ const fileFilter = (req, file, cb) => {
 
   if (file.fieldname === 'reel') {
     const size = parseInt(req.headers['content-length'] || '0');
-    if (!isVideo) return cb(createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid video format'));
     if (size > MAX_VIDEO_SIZE_MB * 1024 * 1024) {
       return cb(createError(HTTP.StatusCodes.BAD_REQUEST, 'Video exceeds 50MB size limit'));
     }
