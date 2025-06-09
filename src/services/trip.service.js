@@ -100,7 +100,8 @@ export const getTripSuggestion = async (tripId) => {
     if (!lat || !lon) {
       throw new Error('Geocoding did not return valid coordinates');
     }
-    const keyword = 'beach';
+    const keywords = ['beach', 'museum', 'park', 'restaurant', 'monument', 'gallery', 'shopping', 'historic', 'nature', 'cafe'];
+    const keyword = keywords[Math.floor(Math.random() * keywords.length)];
     const radius = 10000;
 
     if (!process.env.OPENTRIPMAP_API_KEY) {
@@ -115,7 +116,8 @@ export const getTripSuggestion = async (tripId) => {
       lat,
       apikey: process.env.OPENTRIPMAP_API_KEY,
     };
-
+    if(!response) getTripSuggestion(tripId)
+      
     const response = await axios.get(url, { params });
     if (!response.data || !Array.isArray(response.data.features) || !response.data.features.length) {
       throw new Error('No suggestions found for the given location');

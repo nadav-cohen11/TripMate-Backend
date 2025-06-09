@@ -15,7 +15,7 @@ export const initSocket = (server) => {
 
   const onlineUsers = new Map();
 
-  cron.schedule('00 09 * * *', async () => {
+  cron.schedule('58 21 * * *', async () => {
     try {
       const groupChats = await ChatServices.getGroupChats();
       for (const g of groupChats) {
@@ -27,6 +27,7 @@ export const initSocket = (server) => {
           }
           const message = await ChatServices.createMessage(g._id, null, msg)
           io.to(g._id.toString()).emit('messageReceived', message)
+          console.log('message')
         } catch (err) {
           continue;
         }
@@ -85,8 +86,7 @@ export const initSocket = (server) => {
           try {
             const socketId = onlineUsers.get(userId.toString());
             if (socketId) {
-              const chats = await ChatServices.getChatsByUser(userId)
-              io.to(socketId).emit('newChatCreated', { chats });
+              io.to(socketId).emit('newChatCreated', { chat });
             }
           } catch (err) {
             console.error('Error in addNewChat (inner):', err);
@@ -129,9 +129,8 @@ export const initSocket = (server) => {
         participants.forEach(async (p) => {
           try {
             const socketId = onlineUsers.get(p._id.toString());
-            const chats = await ChatServices.getChatsByUser(p._id)
             if (socketId) {
-              io.to(socketId).emit('newTripCreated', { chats });
+              io.to(socketId).emit('newTripCreated', { chat });
             }
           } catch (err) {
             console.error('Error in createTrip (inner):', err);
