@@ -229,7 +229,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     user2.languagesSpoken.includes(lang)
   );
   if (commonLanguages.length > 0) {
-    const langScore = commonLanguages.length * 13; // raised from 10
+    const langScore = commonLanguages.length * 13; 
     score += langScore;
     details.languages = langScore;
   }
@@ -238,7 +238,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   const user2Dest = user2.travelPreferences?.destinations || [];
   const commonDest = user1Dest.filter(dest => user2Dest.includes(dest));
   if (commonDest.length > 0) {
-    const destScore = commonDest.length * 18; // raised from 14
+    const destScore = commonDest.length * 18; 
     score += destScore;
     details.destinations = destScore;
   }
@@ -249,7 +249,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     const latestStart = new Date(Math.max(new Date(u1Dates.start), new Date(u2Dates.start)));
     const earliestEnd = new Date(Math.min(new Date(u1Dates.end), new Date(u2Dates.end)));
     if (latestStart <= earliestEnd) {
-      score += 24; // raised from 18
+      score += 24; 
       details.dates = 24;
     }
   }
@@ -257,7 +257,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   const u1Group = user1.travelPreferences?.groupSize;
   const u2Group = user2.travelPreferences?.groupSize;
   if (u1Group && u2Group && Math.abs(u1Group - u2Group) <= 1) {
-    score += 16; // raised from 12
+    score += 16; 
     details.groupSize = 16;
   }
 
@@ -266,7 +266,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   if (u1Age && u2Age) {
     const overlap = Math.max(0, Math.min(u1Age.max, u2Age.max) - Math.max(u1Age.min, u2Age.min));
     if (overlap > 0) {
-      score += 16; // raised from 12
+      score += 16; 
       details.ageRange = 16;
     }
   }
@@ -275,7 +275,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   const u2Interests = user2.travelPreferences?.interests || [];
   const commonInterests = u1Interests.filter(i => u2Interests.includes(i));
   if (commonInterests.length > 0) {
-    const interestsScore = commonInterests.length * 13; // raised from 10
+    const interestsScore = commonInterests.length * 13; 
     score += interestsScore;
     details.interests = interestsScore;
   }
@@ -285,7 +285,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     user2.travelPreferences?.travelStyle &&
     user1.travelPreferences.travelStyle === user2.travelPreferences.travelStyle
   ) {
-    score += 18; // raised from 14
+    score += 18;
     details.travelStyle = 18;
   }
 
@@ -294,7 +294,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     user2.adventureStyle &&
     user1.adventureStyle === user2.adventureStyle
   ) {
-    score += 14; // raised from 10
+    score += 14; 
     details.adventureStyle = 14;
   }
 
@@ -303,18 +303,18 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     user2.location?.country &&
     user1.location.country === user2.location.country
   ) {
-    score += 12; // raised from 8
+    score += 12; 
     details.country = 12;
     if (
       user1.location.city &&
       user2.location.city &&
       user1.location.city === user2.location.city
     ) {
-      score += 12; // raised from 8
+      score += 12; 
       details.city = 12;
     }
   }
 
-  score = Math.max(28, Math.min(score, 99)); // raised minimum from 20
+  score = Math.max(28, Math.min(score, 99)); 
   return { score, details };
 };
