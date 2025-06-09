@@ -222,7 +222,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   const user1 = await UserServices.getUser(user1Id);
   const user2 = await UserServices.getUser(user2Id);
 
-  let score = 0;
+  let score = 40;
   let details = {};
 
   const commonLanguages = user1.languagesSpoken.filter(lang =>
