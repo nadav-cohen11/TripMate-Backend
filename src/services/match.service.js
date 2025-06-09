@@ -222,14 +222,14 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   const user1 = await UserServices.getUser(user1Id);
   const user2 = await UserServices.getUser(user2Id);
 
-  let score = 40;
+  let score = 0;
   let details = {};
 
   const commonLanguages = user1.languagesSpoken.filter(lang =>
     user2.languagesSpoken.includes(lang)
   );
   if (commonLanguages.length > 0) {
-    const langScore = commonLanguages.length * 7;
+    const langScore = commonLanguages.length * 13; // raised from 10
     score += langScore;
     details.languages = langScore;
   }
@@ -238,7 +238,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   const user2Dest = user2.travelPreferences?.destinations || [];
   const commonDest = user1Dest.filter(dest => user2Dest.includes(dest));
   if (commonDest.length > 0) {
-    const destScore = commonDest.length * 10;
+    const destScore = commonDest.length * 18; // raised from 14
     score += destScore;
     details.destinations = destScore;
   }
@@ -249,16 +249,16 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     const latestStart = new Date(Math.max(new Date(u1Dates.start), new Date(u2Dates.start)));
     const earliestEnd = new Date(Math.min(new Date(u1Dates.end), new Date(u2Dates.end)));
     if (latestStart <= earliestEnd) {
-      score += 15;
-      details.dates = 15;
+      score += 24; // raised from 18
+      details.dates = 24;
     }
   }
 
   const u1Group = user1.travelPreferences?.groupSize;
   const u2Group = user2.travelPreferences?.groupSize;
   if (u1Group && u2Group && Math.abs(u1Group - u2Group) <= 1) {
-    score += 8;
-    details.groupSize = 8;
+    score += 16; // raised from 12
+    details.groupSize = 16;
   }
 
   const u1Age = user1.travelPreferences?.ageRange;
@@ -266,8 +266,8 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   if (u1Age && u2Age) {
     const overlap = Math.max(0, Math.min(u1Age.max, u2Age.max) - Math.max(u1Age.min, u2Age.min));
     if (overlap > 0) {
-      score += 8;
-      details.ageRange = 8;
+      score += 16; // raised from 12
+      details.ageRange = 16;
     }
   }
 
@@ -275,7 +275,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   const u2Interests = user2.travelPreferences?.interests || [];
   const commonInterests = u1Interests.filter(i => u2Interests.includes(i));
   if (commonInterests.length > 0) {
-    const interestsScore = commonInterests.length * 7;
+    const interestsScore = commonInterests.length * 13; // raised from 10
     score += interestsScore;
     details.interests = interestsScore;
   }
@@ -285,8 +285,8 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     user2.travelPreferences?.travelStyle &&
     user1.travelPreferences.travelStyle === user2.travelPreferences.travelStyle
   ) {
-    score += 12;
-    details.travelStyle = 12;
+    score += 18; // raised from 14
+    details.travelStyle = 18;
   }
 
   if (
@@ -294,8 +294,8 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     user2.adventureStyle &&
     user1.adventureStyle === user2.adventureStyle
   ) {
-    score += 8;
-    details.adventureStyle = 8;
+    score += 14; // raised from 10
+    details.adventureStyle = 14;
   }
 
   if (
@@ -303,18 +303,18 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     user2.location?.country &&
     user1.location.country === user2.location.country
   ) {
-    score += 5;
-    details.country = 5;
+    score += 12; // raised from 8
+    details.country = 12;
     if (
       user1.location.city &&
       user2.location.city &&
       user1.location.city === user2.location.city
     ) {
-      score += 5;
-      details.city = 5;
+      score += 12; // raised from 8
+      details.city = 12;
     }
   }
 
-  score = Math.max(35, Math.min(score, 99));
+  score = Math.max(28, Math.min(score, 99)); // raised minimum from 20
   return { score, details };
 };
