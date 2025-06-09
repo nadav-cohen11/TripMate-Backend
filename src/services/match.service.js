@@ -2,10 +2,10 @@ import Match from '../models/match.model.js';
 import createError from 'http-errors';
 import HTTP from '../constants/status.js';
 import User from '../models/user.model.js';
-import logger from '../config/logger.js';
+import * as UserServices from '../services/user.service.js'
 import mongoose from 'mongoose';
 
-export const createOrAcceptMatch = async (user1Id, user2Id, scores = {}) => {
+export const createOrAcceptMatch = async (user1Id, user2Id, compatibilityScore = 35) => {
   try {
     const existingPendingMatch = await Match.findOne({
       user1Id: user2Id,
@@ -24,7 +24,7 @@ export const createOrAcceptMatch = async (user1Id, user2Id, scores = {}) => {
         initiatedBy: user1Id,
         status: 'accepted',
         respondedAt: new Date(),
-        ...scores,
+        compatibilityScore,
       });
     }
 
@@ -35,7 +35,7 @@ export const createOrAcceptMatch = async (user1Id, user2Id, scores = {}) => {
       user2Id,
       initiatedBy: user1Id,
       status: 'pending',
-      ...scores,
+      compatibilityScore,
     });
     return match;
   } catch (error) {
@@ -216,4 +216,105 @@ export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => {
+  const user1 = await UserServices.getUser(user1Id);
+  const user2 = await UserServices.getUser(user2Id);
+
+  let score = 0;
+  let details = {};
+
+  const commonLanguages = user1.languagesSpoken.filter(lang =>
+    user2.languagesSpoken.includes(lang)
+  );
+  if (commonLanguages.length > 0) {
+    const langScore = commonLanguages.length * 7;
+    score += langScore;
+    details.languages = langScore;
+  }
+
+  const user1Dest = user1.travelPreferences?.destinations || [];
+  const user2Dest = user2.travelPreferences?.destinations || [];
+  const commonDest = user1Dest.filter(dest => user2Dest.includes(dest));
+  if (commonDest.length > 0) {
+    const destScore = commonDest.length * 10;
+    score += destScore;
+    details.destinations = destScore;
+  }
+
+  const u1Dates = user1.travelPreferences?.travelDates;
+  const u2Dates = user2.travelPreferences?.travelDates;
+  if (u1Dates && u2Dates) {
+    const latestStart = new Date(Math.max(new Date(u1Dates.start), new Date(u2Dates.start)));
+    const earliestEnd = new Date(Math.min(new Date(u1Dates.end), new Date(u2Dates.end)));
+    if (latestStart <= earliestEnd) {
+      score += 15;
+      details.dates = 15;
+    }
+  }
+
+  const u1Group = user1.travelPreferences?.groupSize;
+  const u2Group = user2.travelPreferences?.groupSize;
+  if (u1Group && u2Group && Math.abs(u1Group - u2Group) <= 1) {
+    score += 8;
+    details.groupSize = 8;
+  }
+
+  const u1Age = user1.travelPreferences?.ageRange;
+  const u2Age = user2.travelPreferences?.ageRange;
+  if (u1Age && u2Age) {
+    const overlap = Math.max(0, Math.min(u1Age.max, u2Age.max) - Math.max(u1Age.min, u2Age.min));
+    if (overlap > 0) {
+      score += 8;
+      details.ageRange = 8;
+    }
+  }
+
+  const u1Interests = user1.travelPreferences?.interests || [];
+  const u2Interests = user2.travelPreferences?.interests || [];
+  const commonInterests = u1Interests.filter(i => u2Interests.includes(i));
+  if (commonInterests.length > 0) {
+    const interestsScore = commonInterests.length * 7;
+    score += interestsScore;
+    details.interests = interestsScore;
+  }
+
+  if (
+    user1.travelPreferences?.travelStyle &&
+    user2.travelPreferences?.travelStyle &&
+    user1.travelPreferences.travelStyle === user2.travelPreferences.travelStyle
+  ) {
+    score += 12;
+    details.travelStyle = 12;
+  }
+
+  if (
+    user1.adventureStyle &&
+    user2.adventureStyle &&
+    user1.adventureStyle === user2.adventureStyle
+  ) {
+    score += 8;
+    details.adventureStyle = 8;
+  }
+
+  if (
+    user1.location?.country &&
+    user2.location?.country &&
+    user1.location.country === user2.location.country
+  ) {
+    score += 5;
+    details.country = 5;
+    if (
+      user1.location.city &&
+      user2.location.city &&
+      user1.location.city === user2.location.city
+    ) {
+      score += 5;
+      details.city = 5;
+    }
+  }
+
+  score = Math.max(35, Math.min(score, 99));
+  return { score, details };
 };
