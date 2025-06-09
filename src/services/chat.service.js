@@ -40,6 +40,7 @@ export const findOrCreateChat = async (userA, userB) => {
     });
     if (!chat) {
       chat = await Chat.create({ participants: [userA, userB] });
+      chat = await chat.populate('participants', 'fullName _id');
     }
     return chat;
   } catch (error) {
@@ -65,7 +66,8 @@ export const createGroupChat = async (participants, chatName, tripId) => {
     if (!existingTrip) {
       throw new Error('Trip not found');
     }
-    const chat = await Chat.create({ isGroupChat: true, participants, chatName, tripId });
+    let chat = await Chat.create({ isGroupChat: true, participants, chatName, tripId });
+    chat = await chat.populate('participants', 'fullName _id');
     return chat;
   } catch (error) {
     throw error;
