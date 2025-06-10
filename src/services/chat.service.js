@@ -155,6 +155,10 @@ export const deleteUserFromGroup = async (chatId, userId) => {
 };
 
 export const getGroupChats = async () => {
-  const groupChats = await Chat.find({ isGroupChat: true });
-  return groupChats;
-}
+  try {
+    const groupChats = await Chat.find({ isGroupChat: true });
+    return groupChats;
+  } catch (error) {
+    throw error;
+  }
+};
