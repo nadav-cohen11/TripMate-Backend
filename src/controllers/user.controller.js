@@ -1,10 +1,11 @@
 import * as UserServices from '../services/user.service.js';
 import HTTP from '../constants/status.js';
 import jwt from 'jsonwebtoken';
-
+import {getGroupChats} from '../services/chat.service.js'
 export const login = async (req, res, next) => {
   try {
     const { email, password, location } = req.body;
+    (location)
     const user = await UserServices.login(email, password, location);
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.cookie('token', token, {
@@ -129,6 +130,15 @@ export const getUserByEmail = async (req, res, next) => {
     const user = await UserServices.getUserByEmail(req.query.email);
     if (user) return res.status(HTTP.StatusCodes.OK).json(user);
     return res.sendStatus(HTTP.StatusCodes.NOT_FOUND)
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllGroupChats = async (req, res) => {
+  try {
+    const groupChats = await getGroupChats(req.user.id);
+    return res.status(HTTP.StatusCodes.OK).json(groupChats);
   } catch (error) {
     next(error);
   }

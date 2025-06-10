@@ -4,19 +4,20 @@ import HTTP from '../constants/status.js';
 export const createOrAcceptMatch = async (req, res, next) => {
   try {
     const user1Id = req.user.id;
-    const { user2Id, scores } = req.body;
-    const match = await MatchServices.createOrAcceptMatch(user1Id, user2Id, scores);
+    const { user2Id } = req.body;
+    const { score } =  await MatchServices.calculateCompatibilityScoresForMatch(user1Id, user2Id)
+    const match = await MatchServices.createOrAcceptMatch(user1Id, user2Id, score);
     res.status(HTTP.StatusCodes.CREATED).json(match.status);
   } catch (error) {
     next(error);
   }
 };
 
+
 export const acceptMatch = async (req, res, next) => {
   try {
     const { matchId } = req.body;
     const match = await MatchServices.acceptMatch(matchId);
-
     res.status(HTTP.StatusCodes.CREATED).json(match.status);
   } catch (error) {
     next(error);
@@ -95,8 +96,15 @@ export const getNearbyUsersHandler = async (req, res, next) => {
     const userId = req.user.id;
     const maxDistance = parseInt(req.query.maxDistance, 10) || 10000;
     const users = await MatchServices.getNonMatchedNearbyUsers(userId, maxDistance);
-    res.status(200).json(users);
-  } catch (error) {
+    const usersWithScores = [];
+    for (let u of users) {
+      const { score } = await MatchServices.calculateCompatibilityScoresForMatch(u._id, userId);
+      const userObj = u.toObject();
+      userObj.compatibilityScore = score;
+      usersWithScores.push(userObj);
+    }
+    res.status(200).json(usersWithScores);
+    } catch (error) {
     next(error);
   }
 };

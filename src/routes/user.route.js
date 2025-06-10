@@ -14,6 +14,7 @@ router.get('/usersLocations', UserControllers.getUserLocations);
 router.get('/auth/check', verifyToken, (req, res) => {
     res.status(200).json({ userId: req.user.id });
 });
+router.get('/getGroupChats',verifyToken,UserControllers.getAllGroupChats)
 
 router.get('/:userId', verifyToken, UserControllers.getUserById);
 router.delete('/:userId', verifyToken, UserControllers.deleteUser);
