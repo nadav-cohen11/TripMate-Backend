@@ -79,4 +79,5 @@ export const reelSchema = new Schema({
   tripId: { type: Schema.Types.ObjectId, ref: 'Trip', required: false },
   comments: { type: [commentSchema], default: [] },
   likes: { type: [likeSchema], default: [] },
+  createdAt: { type: Date, default: Date.now }
 }, { _id: true });
