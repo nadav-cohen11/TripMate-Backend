@@ -5,7 +5,6 @@ import {getGroupChats} from '../services/chat.service.js'
 export const login = async (req, res, next) => {
   try {
     const { email, password, location } = req.body;
-    (location)
     const user = await UserServices.login(email, password, location);
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.cookie('token', token, {

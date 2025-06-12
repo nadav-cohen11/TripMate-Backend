@@ -6,11 +6,16 @@ import { isValidCoordinates } from '../utils/cordinatesValidator.js';
 
 export const login = async (email, password, location) => {
   try {
+    console.log("location", location)
     const user = await User.findOne({ email });
     if (!user) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
-    if (!isValidCoordinates(location)) {
+    if (location.length === 0 || !isValidCoordinates(location)) {
+      user.location.coordinates = [ -0.0723, 51.457 ]; // remove in Production
+      await user.save();
+    }
+    else {
       user.location.coordinates = location;
       await user.save();
     }
@@ -33,6 +38,9 @@ export const createUser = async (userData) => {
 
     if (!location) {
       throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid or missing location');
+    }
+    else {
+      userData.location.coordinates = [ -0.0723, 51.457 ];
     }
 
     const newUser = new User({

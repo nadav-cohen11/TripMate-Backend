@@ -28,7 +28,6 @@ export const GeoLocationSchema = new Schema({
   type: { type: String, enum: ['Point'], default: 'Point' },
   coordinates: {
     type: [Number],
-    required: true,
   },
   country: { type: String },
   city: { type: String },

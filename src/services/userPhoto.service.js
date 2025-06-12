@@ -159,7 +159,7 @@ export const setProfilePhoto = async (userId, publicId) => {
 
 export const getAllReels = async () => {
   try {
-    const users = await User.find({ 'reels.0': { $exists: true } });
+    const users = await User.find({ 'reels.0': { $exists: true } }).limit(20); // fix to production
 
     const reels = users.flatMap(user => {
       const profilePhoto = user.photos.find(photo =>

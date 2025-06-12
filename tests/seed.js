@@ -18,10 +18,10 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const NUM_USERS = 10;
-const NUM_TRIPS = 7;
-const NUM_REVIEWS = 25;
-const NUM_MATCHES = 3;
+const NUM_USERS = 80;
+const NUM_TRIPS = 40;
+const NUM_REVIEWS = 50;
+const NUM_MATCHES = 30;
 
 await mongoose.connect(process.env.MONGO_URI);
 logger.info('✅ Connected to MongoDB');
@@ -60,6 +60,22 @@ async function uploadRandomImageToCloudinary() {
   try {
     const result = await cloudinary.v2.uploader.upload(imageUrl, {
       folder: 'user-gallery',
+      transformation: [{ width: 600, height: 600, crop: 'fill' }],
+    });
+    logger.info('✅ Image uploaded:', result.secure_url);
+    return result.secure_url;
+  } catch (err) {
+    console.error('❌ Image upload failed:', err.message);
+    return null;
+  }
+}
+async function uploadRandomImageProfileToCloudinary() {
+  const imageUrl = faker.image.url();
+  logger.info(`🖼️ Uploading random image: ${imageUrl}`);
+
+  try {
+    const result = await cloudinary.v2.uploader.upload(imageUrl, {
+      folder: 'user-profile',
       transformation: [{ width: 600, height: 600, crop: 'fill' }],
     });
     logger.info('✅ Image uploaded:', result.secure_url);
@@ -134,7 +150,7 @@ async function seedUsers() {
       uploadRandomImageToCloudinary(),
       uploadRandomImageToCloudinary(),
     ]);
-    
+
     const filteredPhotos = photos
       .filter(Boolean)
       .map((url) => ({
@@ -142,9 +158,13 @@ async function seedUsers() {
         public_id: new URL(url).pathname.slice(1),
         type: 'image',
       }));
-    
+    const profilePhoto = await uploadRandomImageProfileToCloudinary();
+    const afterUpload = profilePhoto?.split('/upload/')[1];
+
+    const profilePhotoPath = afterUpload?.replace(/^v\d+\/+/, '');
+
     const reels = Math.random() < 0.5 ? await uploadMultipleVideosToCloudinary() : [];
-    
+
     const user = new User({
       fullName: faker.person.fullName(),
       email: faker.internet.email().toLowerCase(),
@@ -156,7 +176,7 @@ async function seedUsers() {
       adventureStyle: getRandomEnum(['Relaxed', 'Exploratory', 'Extreme', 'Photography']),
       bio: faker.lorem.sentence(),
       photos: filteredPhotos,
-      profilePhoto: filteredPhotos.length > 0 ? filteredPhotos[0] : null,
+      profilePhotoId: profilePhotoPath,
       reels,
       socialLinks: {
         instagram: `https://instagram.com/${faker.internet.username()}`,
