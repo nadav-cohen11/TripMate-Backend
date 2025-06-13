@@ -14,7 +14,7 @@ router.get('/getAllReels', verifyToken, UserPhotoControllers.getAllReels)
 router.post('/comment', verifyToken, UserPhotoControllers.addComment);
 router.post('/like', verifyToken, UserPhotoControllers.addLike);
 router.post('/unlike', verifyToken, UserPhotoControllers.removeLike);
-
+router.post('/upload-instagram',verifyToken,UserPhotoControllers.uploadToInstagram)
 router.get('/:reelId/likes', verifyToken, UserPhotoControllers.getReelLikesCount);
 router.get('/:reelId/comments', verifyToken, UserPhotoControllers.getReelComments);
 
