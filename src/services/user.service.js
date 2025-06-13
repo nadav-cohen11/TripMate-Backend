@@ -12,7 +12,7 @@ export const login = async (email, password, location) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
     if (location.length === 0 || !isValidCoordinates(location)) {
-      user.location.coordinates = [ 31.96516656696053, 34.79766117754824 ]; // remove in Production
+      user.location.coordinates = [ 31.96516656696053, 34.79766117754824 ]; 
       await user.save();
     }
     else {
