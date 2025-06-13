@@ -2,6 +2,8 @@ import * as UserServices from '../services/user.service.js';
 import HTTP from '../constants/status.js';
 import jwt from 'jsonwebtoken';
 import {getGroupChats} from '../services/chat.service.js'
+import logger from '../config/logger.js';
+
 export const login = async (req, res, next) => {
   try {
     const { email, password, location } = req.body;
