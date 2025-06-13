@@ -12,7 +12,7 @@ export const login = async (email, password, location) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
     if (location.length === 0 || !isValidCoordinates(location)) {
-      user.location.coordinates = [ -0.0723, 51.457 ]; // remove in Production
+      user.location.coordinates = [ 31.96516656696053, 34.79766117754824 ]; // remove in Production
       await user.save();
     }
     else {
@@ -40,7 +40,7 @@ export const createUser = async (userData) => {
       throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid or missing location');
     }
     else {
-      userData.location.coordinates = [ -0.0723, 51.457 ];
+      userData.location.coordinates = [ 31.96516656696053, 34.79766117754824 ];
     }
 
     const newUser = new User({
