@@ -34,7 +34,7 @@ export const register = async (req, res, next) => {
       sameSite: 'strict',
       maxAge: 3600000,
     });
-    logger.info('Registration successful', user._id);
+    logger.info('Registration successful1', user._id);
     res.status(HTTP.StatusCodes.CREATED).json({ message: 'Registration successful', id: user._id });
   } catch (error) {
     next(error);
