@@ -2,10 +2,11 @@ import * as UserServices from '../services/user.service.js';
 import HTTP from '../constants/status.js';
 import jwt from 'jsonwebtoken';
 import {getGroupChats} from '../services/chat.service.js'
+import logger from '../config/logger.js';
+
 export const login = async (req, res, next) => {
   try {
     const { email, password, location } = req.body;
-    (location)
     const user = await UserServices.login(email, password, location);
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     console.log(token)
@@ -15,6 +16,7 @@ export const login = async (req, res, next) => {
       sameSite: 'strict',
       maxAge: 3600000,
     });
+    logger.info('Login successful', user._id);
     res.status(HTTP.StatusCodes.OK).json({ id: user._id });
   } catch (error) {
     next(error);
@@ -35,7 +37,7 @@ export const register = async (req, res, next) => {
       sameSite: 'strict',
       maxAge: 3600000,
     });
-
+    logger.info('Registration successful1', user._id);
     res.status(HTTP.StatusCodes.CREATED).json({ message: 'Registration successful', id: user._id });
   } catch (error) {
     next(error);

@@ -205,8 +205,9 @@ export const fetchNearbyEvents = async (lat, lon, keyword) => {
     const params = {
       apikey: apiKey,
       latlong: `${lat},${lon}`,
-      radius: 5000,
+      radius: 500,
       unit: 'km',
+      keyword: keyword || '',
     };
 
     const response = await axios.get(url, { params });

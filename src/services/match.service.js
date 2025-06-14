@@ -168,10 +168,14 @@ export const blockMatch = async (matchId) => {
   }
 };
 
-export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters) => {
+export const getNonMatchedNearbyUsersWithReviews = async (userId, maxDistanceInMeters) => {
   try {
-    if (maxDistanceInMeters < 0) {
-      throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid maxDistanceInMeters value');
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid userId');
+    }
+
+    if (maxDistanceInMeters <= 0) {
+      throw createError(HTTP.StatusCodes.BAD_REQUEST, 'maxDistanceInMeters must be greater than 0');
     }
 
     const matchedUserIds = await Match.find({
@@ -185,36 +189,118 @@ export const getNonMatchedNearbyUsers = async (userId, maxDistanceInMeters) => {
 
     const excludedUserIds = [...new Set([...matchedUserIds, ...pendingSentUserIds, userId])];
 
-    const currentUserLocation = await User.findById(userId);
+    const currentUser = await User.findById(userId);
+    if (!currentUser || !currentUser.location?.coordinates) {
+      throw createError(HTTP.StatusCodes.NOT_FOUND, 'User location not found');
+    }
 
-    if (!currentUserLocation) throw createError(HTTP.StatusCodes.NOT_FOUND, 'User location not found');
-
-    const nearbyUserLocations = await User.find({
-      _id: { $nin: excludedUserIds },
-      location: {
-        $near: {
-          $geometry: currentUserLocation.location,
-          $maxDistance: maxDistanceInMeters,
+    const nearbyUsers = await User.aggregate([
+      {
+        $geoNear: {
+          near: {
+            type: 'Point',
+            coordinates: currentUser.location.coordinates,
+          },
+          distanceField: 'distance',
+          maxDistance: maxDistanceInMeters,
+          spherical: true,
+          query: {
+            _id: { $nin: excludedUserIds.map(id => new mongoose.Types.ObjectId(id)) },
+            isDeleted: false,
+          },
         },
       },
-    });
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: '_id',
+          foreignField: 'revieweeId',
+          as: 'reviews',
+        },
+      },
+      {
+        $unwind: {
+          path: '$reviews',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'reviews.reviewerId',
+          foreignField: '_id',
+          as: 'reviews.reviewer',
+        },
+      },
+      {
+        $unwind: {
+          path: '$reviews.reviewer',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $group: {
+          _id: '$_id',
+          fullName: { $first: '$fullName' },
+          email: { $first: '$email' },
+          location: { $first: '$location' },
+          travelPreferences: { $first: '$travelPreferences' },
+          adventureStyle: { $first: '$adventureStyle' },
+          bio: { $first: '$bio' },
+          photos: { $first: '$photos' },
+          profilePhotoId: { $first: '$profilePhotoId' },
+          reels: { $first: '$reels' },
+          socialLinks: { $first: '$socialLinks' },
+          distance: { $first: '$distance' },
+          reviews: {
+            $push: {
+              _id: '$reviews._id',
+              rating: '$reviews.rating',
+              comment: '$reviews.comment',
+              tripId: '$reviews.tripId',
+              createdAt: '$reviews.createdAt',
+              reviewer: {
+                _id: '$reviews.reviewer._id',
+                fullName: '$reviews.reviewer.fullName',
+                email: '$reviews.reviewer.email',
+                photos: '$reviews.reviewer.photos',
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          reviews: {
+            $filter: {
+              input: '$reviews',
+              as: 'review',
+              cond: { $ne: ['$$review._id', null] },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          password: 0,
+          isDeleted: 0,
+          createdAt: 0,
+          updatedAt: 0,
+        },
+      },
+    ]);
 
-    const nearbyUserIds = nearbyUserLocations.map((loc) => loc._id.toString());
-
-    const nonMatchedNearbyUsers = await User.find({
-      _id: { $in: nearbyUserIds },
-    }).select('-password -isDeleted -createdAt -updatedAt');
-
-    if (nonMatchedNearbyUsers.length === 0) {
+    if (!nearbyUsers.length) {
       throw createError(HTTP.StatusCodes.NOT_FOUND, 'No nearby users found');
     }
 
-    const filteredUsers = nonMatchedNearbyUsers.filter(
-      (user) => user._id.toString() !== userId.toString()
-    );
-    return filteredUsers;
+    return nearbyUsers;
   } catch (error) {
-    throw error;
+    console.error('Error in getNonMatchedNearbyUsersWithReviews:', error);
+    throw createError(
+      error.statusCode || HTTP.StatusCodes.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to get nearby users with reviews'
+    );
   }
 };
 

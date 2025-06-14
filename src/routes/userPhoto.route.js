@@ -18,5 +18,4 @@ router.post('/upload-instagram',verifyToken,UserPhotoControllers.uploadToInstagr
 router.get('/:reelId/likes', verifyToken, UserPhotoControllers.getReelLikesCount);
 router.get('/:reelId/comments', verifyToken, UserPhotoControllers.getReelComments);
 
-
 export default router;
