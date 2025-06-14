@@ -50,7 +50,7 @@ export const handleDeleteReel = async (req, res, next) => {
 
 export const getAllReels = async (req, res, next) => {
   try {
-    const reels = await UserPhotoServices.getAllReels();
+    const reels = await UserPhotoServices.getAllReels(req.user.id);
     res.status(HTTP.StatusCodes.OK).json({ reels });
   } catch (err) {
     next(err);

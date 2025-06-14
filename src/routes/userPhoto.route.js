@@ -15,8 +15,4 @@ router.post('/comment', verifyToken, UserPhotoControllers.addComment);
 router.post('/like', verifyToken, UserPhotoControllers.addLike);
 router.post('/unlike', verifyToken, UserPhotoControllers.removeLike);
 
-router.get('/:reelId/likes', verifyToken, UserPhotoControllers.getReelLikesCount);
-router.get('/:reelId/comments', verifyToken, UserPhotoControllers.getReelComments);
-
-
 export default router;
