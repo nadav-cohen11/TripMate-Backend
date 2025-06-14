@@ -28,7 +28,6 @@ export const GeoLocationSchema = new Schema({
   type: { type: String, enum: ['Point'], default: 'Point' },
   coordinates: {
     type: [Number],
-    required: true,
   },
   country: { type: String },
   city: { type: String },
@@ -79,4 +78,5 @@ export const reelSchema = new Schema({
   tripId: { type: Schema.Types.ObjectId, ref: 'Trip', required: false },
   comments: { type: [commentSchema], default: [] },
   likes: { type: [likeSchema], default: [] },
+  createdAt: { type: Date, default: Date.now }
 }, { _id: true });

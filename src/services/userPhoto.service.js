@@ -158,19 +158,36 @@ export const setProfilePhoto = async (userId, publicId) => {
   return user.profilePhotoId;
 };
 
-export const getAllReels = async () => {
+export const getAllReels = async (cuurUserId) => {
   try {
-    const users = await User.find({ 'reels.0': { $exists: true } });
+    const users = await User.find({
+      'reels.0': { $exists: true },
+      _id: { $ne: cuurUserId },
+    }).populate('reels.comments.userId', 'fullName');
 
     const reels = users.flatMap(user => {
       const profilePhoto = user.photos.find(photo =>
         photo.public_id.includes(user.profilePhotoId)
       );
+
       return user.reels.map(reel => ({
-        ...reel.toObject(),
+        _id: reel._id,
+        url: reel.url,
+        public_id: reel.public_id,
+        type: reel.type,
+        tripId: reel.tripId,
+        createdAt: reel.createdAt,
         userFullName: user.fullName,
         userId: user._id.toString(),
         userProfilePhotoUrl: profilePhoto?.url || null,
+        likesCount: reel.likes.length,
+        comments: reel.comments.map(comment => ({
+          _id: comment._id,
+          text: comment.text,
+          createdAt: comment.createdAt,
+          userId: comment.userId?._id || comment.userId,
+          userFullName: comment.userId?.fullName || null,
+        }))
       }));
     });
 
@@ -310,3 +327,4 @@ export const uploadToInstagram = async(mediaUrl,caption) => {
     throw error
   }
 }
+

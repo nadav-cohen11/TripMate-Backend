@@ -13,6 +13,6 @@ router.post('/decline',verifyToken, matchController.decline);
 router.post('/unmatch', verifyToken, matchController.unmatch);
 router.post('/block',verifyToken, matchController.block);
 router.get('/all', matchController.getAllMatches)
-router.get('/home/NonMatchedUsers', verifyToken, matchController.getNearbyUsersHandler);
+router.get('/home/NonMatchedUsers', verifyToken, matchController.getNonMatchedNearbyUsersWithReviews);
 
 export default router;

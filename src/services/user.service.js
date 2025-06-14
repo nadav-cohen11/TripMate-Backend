@@ -3,14 +3,20 @@ import createError from 'http-errors';
 import User from '../models/user.model.js'
 import bcrypt from 'bcrypt'
 import { isValidCoordinates } from '../utils/cordinatesValidator.js';
+import logger from '../config/logger.js';
 
 export const login = async (email, password, location) => {
   try {
+    logger.info("location", location)
     const user = await User.findOne({ email });
     if (!user) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
-    if (!isValidCoordinates(location)) {
+    if (location.length === 0 || !isValidCoordinates(location)) {
+      user.location.coordinates = [ 31.96516656696053, 34.79766117754824 ]; 
+      await user.save();
+    }
+    else {
       user.location.coordinates = location;
       await user.save();
     }
@@ -33,6 +39,9 @@ export const createUser = async (userData) => {
 
     if (!location) {
       throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid or missing location');
+    }
+    else {
+      userData.location.coordinates = [ 31.96516656696053, 34.79766117754824 ];
     }
 
     const newUser = new User({

@@ -91,20 +91,21 @@ export const block = async (req, res, next) => {
   }
 };
 
-export const getNearbyUsersHandler = async (req, res, next) => {
+export const getNonMatchedNearbyUsersWithReviews = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const maxDistance = parseInt(req.query.maxDistance, 10) || 10000;
-    const users = await MatchServices.getNonMatchedNearbyUsers(userId, maxDistance);
-    const usersWithScores = [];
-    for (let u of users) {
-      const { score } = await MatchServices.calculateCompatibilityScoresForMatch(u._id, userId);
-      const userObj = u.toObject();
-      userObj.compatibilityScore = score;
-      usersWithScores.push(userObj);
-    }
-    res.status(200).json(usersWithScores);
-    } catch (error) {
+
+    const users = await MatchServices.getNonMatchedNearbyUsersWithReviews(userId, maxDistance);
+
+    const usersWithScores = await Promise.all(
+      users.map(async (u) => {
+        const { score } = await MatchServices.calculateCompatibilityScoresForMatch(u._id, userId);
+        return { ...u, compatibilityScore: score };
+      })
+    );
+    res.status(HTTP.StatusCodes.OK).json(usersWithScores);
+  } catch (error) {
     next(error);
   }
 };
