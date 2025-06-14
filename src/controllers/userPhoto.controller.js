@@ -1,4 +1,5 @@
 import HTTP from '../constants/status.js';
+import { getUser } from '../services/user.service.js';
 import * as UserPhotoServices from '../services/userPhoto.service.js';
 
 export const handleUploadPhotos = async (req, res, next) => {
@@ -68,7 +69,7 @@ export const addComment = async (req, res, next) => {
   }
 };
 
-export const addLike = async (req, res,next) => {
+export const addLike = async (req, res, next) => {
   const { reelId } = req.body;
   const userId = req.user.id;
   try {
@@ -109,3 +110,17 @@ export const getReelComments = async (req, res, next) => {
     next(error);
   }
 };
+
+export const uploadToInstagram = async (req, res, next) => {
+  try {
+    const { mediaUrl } = req.body
+    const user = await getUser(req.user.id)
+    const caption = `Take a look at this awesome moment from ${user.fullName}'s adventures!`
+    console.log('a')
+    const result = await UserPhotoServices.uploadToInstagram(mediaUrl, caption)
+    console.log(result)
+    res.sendStatus(200)
+  } catch (error) {
+    next(error);
+  }
+}

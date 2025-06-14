@@ -3,6 +3,7 @@ import HTTP from '../constants/status.js';
 import User from '../models/user.model.js';
 import cloudinary from '../config/cloudinary.js';
 import mongoose from 'mongoose';
+import axios from 'axios';
 
 const formatUploadedFile = (file) => {
   if (!file?.path || !file?.filename || !file?.mimetype) {
@@ -264,3 +265,65 @@ export const removeLike = async (userId, reelId) => {
   await user.save();
   return user;
 };
+
+
+export const getReelLikesCount = async (reelId) => {
+  const user = await User.findOne({ 'reels._id': reelId })
+
+  if (!user) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found');
+
+  const reel = user.reels.id(reelId);
+  if (!reel) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found inside user');
+
+  return reel.likes.length;
+};
+
+export const getReelComments = async (reelId) => {
+  const user = await User.findOne({ 'reels._id': reelId })
+  .populate('reels.comments.userId', 'fullName');
+
+  if (!user) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found');
+
+  const reel = user.reels.id(reelId);
+  if (!reel) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found inside user');
+
+  return reel.comments;
+};
+
+export const uploadToInstagram = async(mediaUrl,caption) => {
+  try {
+    const baseUrl = 'https://graph.facebook.com/v19.0'
+
+    const mediaBody = {
+      "image_url": mediaUrl,
+      "caption": caption,
+      "access_token": process.env.API_KEY_INSTAGRAM
+    } 
+    const resMedia = await axios.post(
+      `${baseUrl}/${process.env.INSTAGRAM_PAGE_ID}/media`,
+      mediaBody,
+    );
+
+    if(!resMedia || !resMedia.data || !resMedia.data.id) {
+      throw createError(HTTP.StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to create Instagram media');
+    }
+
+    const publishBody = {
+      creation_id: resMedia.data.id,
+      access_token: process.env.API_KEY_INSTAGRAM
+    };
+    const resPublish = await axios.post(
+      `${baseUrl}/${process.env.INSTAGRAM_PAGE_ID}/media_publish`,
+      publishBody
+    );
+
+    if(!resPublish || !resPublish.data || !resPublish.data.id) {
+      throw createError(HTTP.StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to publish Instagram media');
+    }
+
+    return resPublish.data;
+  } catch (error) {
+    console.error('Instagram upload error:', error.response?.data || error.message || error);
+    throw error
+  }
+}

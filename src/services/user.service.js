@@ -57,7 +57,6 @@ export const createUser = async (userData) => {
       },
     });
 
-
     const savedUser = await newUser.save();
     delete savedUser.password;
     return savedUser;
