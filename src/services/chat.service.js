@@ -154,9 +154,12 @@ export const deleteUserFromGroup = async (chatId, userId) => {
   }
 };
 
-export const getGroupChats = async () => {
+export const getGroupChatsByUser = async (userId) => {
   try {
-    const groupChats = await Chat.find({ isGroupChat: true });
+    const groupChats = await Chat.find({ 
+      isGroupChat: true, 
+      participants: { $elemMatch: { $eq: userId } } 
+    });
     return groupChats;
   } catch (error) {
     throw error;

@@ -327,3 +327,4 @@ export const uploadToInstagram = async(mediaUrl,caption) => {
     throw error
   }
 }
+

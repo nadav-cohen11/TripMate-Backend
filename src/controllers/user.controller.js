@@ -1,7 +1,7 @@
 import * as UserServices from '../services/user.service.js';
 import HTTP from '../constants/status.js';
 import jwt from 'jsonwebtoken';
-import {getGroupChats} from '../services/chat.service.js'
+import {getGroupChatsByUser} from '../services/chat.service.js'
 import logger from '../config/logger.js';
 
 export const login = async (req, res, next) => {
@@ -139,7 +139,7 @@ export const getUserByEmail = async (req, res, next) => {
 
 export const getAllGroupChats = async (req, res) => {
   try {
-    const groupChats = await getGroupChats(req.user.id);
+    const groupChats = await getGroupChatsByUser(req.user.id);
     return res.status(HTTP.StatusCodes.OK).json(groupChats);
   } catch (error) {
     next(error);
