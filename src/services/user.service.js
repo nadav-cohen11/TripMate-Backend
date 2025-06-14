@@ -3,10 +3,11 @@ import createError from 'http-errors';
 import User from '../models/user.model.js'
 import bcrypt from 'bcrypt'
 import { isValidCoordinates } from '../utils/cordinatesValidator.js';
+import logger from '../config/logger.js';
 
 export const login = async (email, password, location) => {
   try {
-    console.log("location", location)
+    logger.info("location", location)
     const user = await User.findOne({ email });
     if (!user) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
     const isMatch = await bcrypt.compare(password, user.password);

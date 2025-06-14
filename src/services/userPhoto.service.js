@@ -157,19 +157,36 @@ export const setProfilePhoto = async (userId, publicId) => {
   return user.profilePhotoId;
 };
 
-export const getAllReels = async () => {
+export const getAllReels = async (cuurUserId) => {
   try {
-    const users = await User.find({ 'reels.0': { $exists: true } }).limit(20); // fix to production
+    const users = await User.find({
+      'reels.0': { $exists: true },
+      _id: { $ne: cuurUserId },
+    }).populate('reels.comments.userId', 'fullName');
 
     const reels = users.flatMap(user => {
       const profilePhoto = user.photos.find(photo =>
         photo.public_id.includes(user.profilePhotoId)
       );
+
       return user.reels.map(reel => ({
-        ...reel.toObject(),
+        _id: reel._id,
+        url: reel.url,
+        public_id: reel.public_id,
+        type: reel.type,
+        tripId: reel.tripId,
+        createdAt: reel.createdAt,
         userFullName: user.fullName,
         userId: user._id.toString(),
         userProfilePhotoUrl: profilePhoto?.url || null,
+        likesCount: reel.likes.length,
+        comments: reel.comments.map(comment => ({
+          _id: comment._id,
+          text: comment.text,
+          createdAt: comment.createdAt,
+          userId: comment.userId?._id || comment.userId,
+          userFullName: comment.userId?.fullName || null,
+        }))
       }));
     });
 
@@ -246,28 +263,4 @@ export const removeLike = async (userId, reelId) => {
 
   await user.save();
   return user;
-};
-
-
-export const getReelLikesCount = async (reelId) => {
-  const user = await User.findOne({ 'reels._id': reelId })
-
-  if (!user) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found');
-
-  const reel = user.reels.id(reelId);
-  if (!reel) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found inside user');
-
-  return reel.likes.length;
-};
-
-export const getReelComments = async (reelId) => {
-  const user = await User.findOne({ 'reels._id': reelId })
-  .populate('reels.comments.userId', 'fullName');
-
-  if (!user) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found');
-
-  const reel = user.reels.id(reelId);
-  if (!reel) throw createError(HTTP.StatusCodes.NOT_FOUND, 'Reel not found inside user');
-
-  return reel.comments;
 };
