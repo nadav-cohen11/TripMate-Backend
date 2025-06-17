@@ -163,11 +163,36 @@ export const getAllReels = async (cuurUserId) => {
     const users = await User.find({
       'reels.0': { $exists: true },
       _id: { $ne: cuurUserId },
-    }).populate('reels.comments.userId', 'fullName');
+    })
+      .select('fullName photos profilePhotoId reels')
+      .lean()
+      .limit(10);
+
+    const commentUserIds = [];
+    for (const user of users) {
+      for (const reel of user.reels) {
+        for (const comment of reel.comments) {
+          if (comment.userId) {
+            commentUserIds.push(comment.userId.toString());
+          }
+        }
+      }
+    }
+
+    const uniqueUserIds = [...new Set(commentUserIds)];
+
+    const commentUsers = await User.find({ _id: { $in: uniqueUserIds } })
+      .select('fullName')
+      .lean();
+
+    const userIdToName = commentUsers.reduce((acc, user) => {
+      acc[user._id.toString()] = user.fullName;
+      return acc;
+    }, {});
 
     const reels = users.flatMap(user => {
       const profilePhoto = user.photos.find(photo =>
-        photo.public_id.includes(user.profilePhotoId)
+        user.profilePhotoId && photo.public_id.endsWith(user.profilePhotoId)
       );
 
       return user.reels.map(reel => ({
@@ -185,9 +210,9 @@ export const getAllReels = async (cuurUserId) => {
           _id: comment._id,
           text: comment.text,
           createdAt: comment.createdAt,
-          userId: comment.userId?._id || comment.userId,
-          userFullName: comment.userId?.fullName || null,
-        }))
+          userId: comment.userId?.toString(),
+          userFullName: userIdToName[comment.userId?.toString()] || null,
+        })),
       }));
     });
 
@@ -196,6 +221,8 @@ export const getAllReels = async (cuurUserId) => {
     throw createError(HTTP.StatusCodes.INTERNAL_SERVER_ERROR, error.message);
   }
 };
+
+
 
 export const addComment = async (userId, reelId, text) => {
   const user = await User.findOne({ 'reels._id': reelId });
