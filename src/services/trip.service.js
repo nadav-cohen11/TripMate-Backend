@@ -116,9 +116,12 @@ export const getTripSuggestion = async (tripId) => {
       lat,
       apikey: process.env.OPENTRIPMAP_API_KEY,
     };
-    if(!response) getTripSuggestion(tripId)
+
       
     const response = await axios.get(url, { params });
+    console.log('response', response.data.features)
+    if (!response) getTripSuggestion(tripId)
+
     if (!response.data || !Array.isArray(response.data.features) || !response.data.features.length) {
       throw new Error('No suggestions found for the given location');
     }

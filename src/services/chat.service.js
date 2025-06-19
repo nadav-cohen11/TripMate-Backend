@@ -165,3 +165,14 @@ export const getGroupChatsByUser = async (userId) => {
     throw error;
   }
 };
+
+export const getAllGroupChats = async() => {
+  try {
+    const groupChats = await Chat.find({
+      isGroupChat: true
+    });
+    return groupChats;
+  } catch (error) {
+    throw error;
+  }
+}
