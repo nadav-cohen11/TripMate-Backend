@@ -23,6 +23,20 @@ export const login = async (req, res, next) => {
   }
 };
 
+export const logout = async (req, res, next) => {
+  try {
+
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+    });
+    res.sendStatus(HTTP.StatusCodes.OK);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const register = async (req, res, next) => {
   try {
     const user = await UserServices.createUser(req.body);

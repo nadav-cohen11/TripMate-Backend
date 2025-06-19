@@ -7,6 +7,7 @@ const router = express.Router();
 router.get('/getUser', verifyToken, UserControllers.getUser);
 router.post('/register', UserControllers.register);
 router.post('/login', UserControllers.login);
+router.post('/logout', UserControllers.logout);
 router.put('/updateUser', verifyToken, UserControllers.updateUser);
 router.get('/location', verifyToken, UserControllers.getUserLocation);
 router.get('/getUserByEmail', UserControllers.getUserByEmail);
