@@ -12,6 +12,7 @@ import tripsRoutes from './routes/trip.route.js';
 import messagesRoutes from './routes/message.route.js';
 import userPhotoRoutes from './routes/userPhoto.route.js';
 import qrRoutes from './routes/qr.routes.js';
+import aiRoutes from './routes/ai.routes.js';
 import cookieParser from 'cookie-parser';
 import * as dotenv from 'dotenv';
 
@@ -35,6 +36,7 @@ const init = async () => {
         app.use('/api/messages', messagesRoutes);
         app.use('/api/media', userPhotoRoutes);
         app.use('/api/qr', qrRoutes);
+        app.use('/api/ai', aiRoutes);
         app.use(errorHandler)
 
         logger.info('app initialized');

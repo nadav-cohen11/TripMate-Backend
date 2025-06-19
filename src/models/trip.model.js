@@ -21,8 +21,12 @@ const TripSchema = new Schema({
   itinerary: [ItineraryItemSchema],
   participants: [ParticipantSchema],
   tags: [{ type: String, lowercase: true, trim: true }],
+  ai: { type: String },
+  aiGenerated: { type: Boolean, default: false },
+
 }, {
   timestamps: true,
+  
 });
 
 TripSchema.index({ 'destination.city': 1, 'travelDates.start': 1 });

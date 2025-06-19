@@ -9,7 +9,6 @@ export const login = async (req, res, next) => {
     const { email, password, location } = req.body;
     const user = await UserServices.login(email, password, location);
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    console.log(token)
     res.cookie('token', token, {
       httpOnly: true,
       secure: false,
@@ -80,14 +79,14 @@ export const deleteUser = async (req, res, next) => {
   }
 };
 
-export const updateUser = async (req, res, next) => {
-  try {
-    const updated = await UserServices.updateUser(req.user.id, req.body);
-    res.status(HTTP.StatusCodes.OK).json(updated);
-  } catch (error) {
-    next(error);
-  }
-};
+  export const updateUser = async (req, res, next) => {
+    try {
+      const updated = await UserServices.updateUser(req.user.id, req.body);
+      res.status(HTTP.StatusCodes.OK).json(updated);
+    } catch (error) {
+      next(error);
+    }
+  };
 
 export const getAllUsers = async (req, res, next) => {
   try {

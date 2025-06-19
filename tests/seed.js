@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import cloudinary from 'cloudinary';
+import fs from 'fs';
 import path from 'path';
 import User from '../src/models/user.model.js';
 import Trip from '../src/models/trip.model.js';
@@ -18,10 +19,10 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const NUM_USERS = 80;
-const NUM_TRIPS = 40;
+const NUM_USERS = 60;
+const NUM_TRIPS = 1;
 const NUM_REVIEWS = 50;
-const NUM_MATCHES = 30;
+const NUM_MATCHES = 1;
 
 await mongoose.connect(process.env.MONGO_URI);
 logger.info('✅ Connected to MongoDB');
@@ -41,55 +42,170 @@ function getRandomEnum(enumArray) {
   return faker.helpers.arrayElement(enumArray);
 }
 
-function generateLocation() {
+let latCounter = 0;
+let lonCounter = 0;
+34.79766117754824
+function getRandomPointInIsraeliBox() {
+  const centerLat = 34.79766117754824;
+  const centerLon = 31.96516656696053;
+
+  const smallStep = 1e-8; 
+
+  const lat = centerLat + (latCounter++ * smallStep);
+  const lon = centerLon + (lonCounter++ * smallStep);
+
   return {
     type: 'Point',
-    coordinates: [
-      faker.location.longitude({ max: 0, min: -0.127758 }),
-      faker.location.latitude({ max: 51.507351, min: 51 }),
-    ],
-    country: faker.location.country(),
-    city: faker.location.city(),
+    coordinates: [lon, lat],
+    country: 'Israel',
+    city: faker.helpers.arrayElement([
+      'Rishon LeZion', 'Ness Ziona', 'Rehovot', 'Yavne', 'Holon'
+    ]),
   };
 }
 
-async function uploadRandomImageToCloudinary() {
-  const imageUrl = faker.image.url();
-  logger.info(`🖼️ Uploading random image: ${imageUrl}`);
+
+async function uploadRandomImageToCloudinary(userGender) {
+  const localImages = getLocalProfileImagesPaths(userGender);
+
+  const localImagePath = faker.helpers.arrayElement(localImages);
+  logger.info(`🖼️ Uploading local image for ${localImagePath}`);
 
   try {
-    const result = await cloudinary.v2.uploader.upload(imageUrl, {
+    const result = await cloudinary.v2.uploader.upload(localImagePath, {
       folder: 'user-gallery',
       transformation: [{ width: 600, height: 600, crop: 'fill' }],
     });
     logger.info('✅ Image uploaded:', result.secure_url);
     return result.secure_url;
   } catch (err) {
-    console.error('❌ Image upload failed:', err.message);
+    logger.error('❌ Upload failed:', err.message);
     return null;
   }
 }
-async function uploadRandomImageProfileToCloudinary() {
-  const imageUrl = faker.image.url();
-  logger.info(`🖼️ Uploading random image: ${imageUrl}`);
+
+async function uploadRandomImageNatureToCloudinary() {
+  const localImages = getLocalNatureImagesPaths()
+
+  const localImagePath = faker.helpers.arrayElement(localImages);
+  logger.info(`🖼️ Uploading local image for nature: ${localImagePath}`);
 
   try {
-    const result = await cloudinary.v2.uploader.upload(imageUrl, {
+    const result = await cloudinary.v2.uploader.upload(localImagePath, {
+      folder: 'user-gallery',
+      transformation: [{ width: 600, height: 600, crop: 'fill' }],
+    });
+    logger.info('✅ Image uploaded:', result.secure_url);
+    return result.secure_url;
+  } catch (err) {
+    logger.error('❌ Upload failed:', err.message);
+    return null;
+  }
+}
+
+function getLocalProfileImagesPaths(gender) {
+  const folderPath = path.resolve(
+    `/Users/nadavcohen/DevProject2025/TripMate_Backend/TripMate-Backend/tests/ProfileImage${gender === 'male' ? 'Men' : 'Women'}`
+  );
+
+  const files = fs.readdirSync(folderPath);
+  const images = files
+    .filter(file => ['.jpg', '.jpeg', '.png'].includes(path.extname(file).toLowerCase()))
+    .map(file => path.join(folderPath, file));
+
+  return images;
+}
+
+function getLocalNatureImagesPaths() {
+  const folderPath = path.resolve(
+    '/Users/nadavcohen/DevProject2025/TripMate_Backend/TripMate-Backend/tests/NatureImages'
+  );
+  const files = fs.readdirSync(folderPath);
+  const images = files
+    .filter(file => ['.jpg', '.jpeg', '.png'].includes(path.extname(file).toLowerCase()))
+    .map(file => path.join(folderPath, file));
+
+  return images;
+}
+
+async function uploadLocalProfileImageToCloudinary(userGender) {
+  const localImages = getLocalProfileImagesPaths(userGender);
+
+  const localImagePath = faker.helpers.arrayElement(localImages);
+  logger.info(`🖼️ Uploading local profile image for ${userGender}: ${localImagePath}`);
+
+  try {
+    const result = await cloudinary.v2.uploader.upload(localImagePath, {
       folder: 'user-profile',
       transformation: [{ width: 600, height: 600, crop: 'fill' }],
     });
     logger.info('✅ Image uploaded:', result.secure_url);
     return result.secure_url;
   } catch (err) {
-    console.error('❌ Image upload failed:', err.message);
+    logger.error('❌ Image upload failed:', err.message);
     return null;
   }
 }
 
-const sampleVideoPaths = [
-  '/Users/nadavcohen/DevProject2025/TripMate_Backend/TripMate-Backend/tests/SampleVideos/SampleVideo_360x240_30mb.mp4',
-  '/Users/nadavcohen/DevProject2025/TripMate_Backend/TripMate-Backend/tests/SampleVideos/SampleVideo_720x480_10mb.mp4',
-];
+function getSampleVideoPaths() {
+  const folderPath = '/Users/nadavcohen/DevProject2025/TripMate_Backend/TripMate-Backend/tests/SampleVideos';
+
+  const files = fs.readdirSync(folderPath);
+
+  const videoPaths = files
+    .filter(file => path.extname(file).toLowerCase() === '.mp4')
+    .map(file => path.join(folderPath, file));
+
+  return videoPaths;
+}
+
+const sampleVideoPaths = getSampleVideoPaths();
+
+function getSampleImagesPaths() {
+  const folderPath = '/Users/nadavcohen/DevProject2025/TripMate_Backend/TripMate-Backend/tests/SampleImages';
+
+  const files = fs.readdirSync(folderPath);
+
+  const imagesPaths = files
+    .filter(file => path.extname(file).toLowerCase() === '.jpg')
+    .map(file => path.join(folderPath, file));
+
+  return imagesPaths;
+}
+
+const sampleImagesPaths = getSampleImagesPaths();
+
+async function uploadRandomImageFromLocalToCloudinary() {
+  const localPath = faker.helpers.arrayElement(sampleImagesPaths);
+  const fullPath = path.resolve(localPath);
+
+  logger.info('\n🖼️ [Uploading Image]');
+  logger.info('📍 Chosen file:', localPath);
+  logger.info('📍 Resolved path:', fullPath);
+
+  try {
+    const result = await cloudinary.v2.uploader.upload(fullPath, {
+      resource_type: 'image',
+      folder: 'user-reels',
+    });
+
+    logger.info('✅ Upload success:', {
+      url: result.secure_url,
+      public_id: result.public_id,
+      type: result.resource_type,
+    });
+
+    return {
+      url: result.secure_url,
+      public_id: result.public_id,
+      type: result.resource_type,
+    };
+
+  } catch (err) {
+    logger.error('❌ Upload failed for image at:', fullPath, err);
+    return null;
+  }
+}
 
 async function uploadRandomVideoToCloudinary() {
   const localPath = faker.helpers.arrayElement(sampleVideoPaths);
@@ -117,24 +233,41 @@ async function uploadRandomVideoToCloudinary() {
       type: result.resource_type,
     };
   } catch (err) {
-    console.error('❌ Upload failed for video at:', fullPath);
-    console.error('Error name:', err.name);
-    console.error('Error message:', err.message);
-    console.error('Full error:', err);
+    logger.error('❌ Upload failed for video at:', fullPath, err);
     return null;
   }
 }
 
-async function uploadMultipleVideosToCloudinary() {
-  const videos = [];
-  const numVideos = faker.number.int({ min: 1, max: 3 });
+async function uploadMultipleMediaToUserReels() {
+  const media = [];
+  const numItems = faker.number.int({ min: 1, max: 3 });
 
-  for (let i = 0; i < numVideos; i++) {
-    const uploaded = await uploadRandomVideoToCloudinary();
-    if (uploaded) videos.push(uploaded);
+  for (let i = 0; i < numItems; i++) {
+    const isVideo = Math.random() < 0.5;
+    let uploaded;
+
+    if (isVideo) {
+      uploaded = await uploadRandomVideoToCloudinary();
+    } else {
+      uploaded = await uploadRandomImageFromLocalToCloudinary();
+    }
+
+    if (uploaded) media.push(uploaded);
   }
 
-  return videos;
+  return media;
+}
+
+async function uploadMultipleImagesToCloudinary() {
+  const images = [];
+  const numImages = faker.number.int({ min: 1, max: 3 });
+
+  for (let i = 0; i < numImages; i++) {
+    const uploaded = await uploadRandomImageFromLocalToCloudinary();
+    if (uploaded) images.push(uploaded);
+  }
+
+  return images;
 }
 
 async function seedUsers() {
@@ -144,38 +277,38 @@ async function seedUsers() {
   for (let i = 0; i < NUM_USERS; i++) {
     logger.info(`\n--- Creating user ${i + 1} of ${NUM_USERS} ---`);
     const hashedPassword = await bcrypt.hash('123', 10);
+    const userGender = getRandomEnum(['male', 'female']); 
 
-    const photos = await Promise.all([
-      uploadRandomImageToCloudinary(),
-      uploadRandomImageToCloudinary(),
-      uploadRandomImageToCloudinary(),
+    const photosRaw = await Promise.all([
+      uploadRandomImageToCloudinary(userGender),
+      uploadRandomImageNatureToCloudinary(),
+      uploadRandomImageNatureToCloudinary(),
     ]);
 
-    const filteredPhotos = photos
+    const photos = photosRaw
       .filter(Boolean)
       .map((url) => ({
         url,
         public_id: new URL(url).pathname.slice(1),
         type: 'image',
       }));
-    const profilePhoto = await uploadRandomImageProfileToCloudinary();
-    const afterUpload = profilePhoto?.split('/upload/')[1];
-
+    const profilePhotoUrl = await uploadLocalProfileImageToCloudinary(userGender);
+    const afterUpload = profilePhotoUrl?.split('/upload/')[1];
     const profilePhotoPath = afterUpload?.replace(/^v\d+\/+/, '');
 
-    const reels = Math.random() < 0.5 ? await uploadMultipleVideosToCloudinary() : [];
+    const reels = await uploadMultipleMediaToUserReels();
 
     const user = new User({
       fullName: faker.person.fullName(),
       email: faker.internet.email().toLowerCase(),
       password: hashedPassword,
       birthDate: faker.date.between({ from: '1980-01-01', to: '2005-01-01' }),
-      gender: getRandomEnum(['male', 'female']),
+      gender: userGender,
       languagesSpoken: faker.helpers.arrayElements(['english', 'spanish', 'french', 'german', 'hebrew'], 2),
-      location: generateLocation(),
+      location: getRandomPointInIsraeliBox(),
       adventureStyle: getRandomEnum(['Relaxed', 'Exploratory', 'Extreme', 'Photography']),
       bio: faker.lorem.sentence(),
-      photos: filteredPhotos,
+      photos,
       profilePhotoId: profilePhotoPath,
       reels,
       socialLinks: {
@@ -215,7 +348,7 @@ async function seedTrips(users) {
       destination: {
         country: faker.location.country(),
         city: faker.location.city(),
-        location: generateLocation(),
+        location: getRandomPointInIsraeliBox(),
       },
       travelDates: {
         start: faker.date.future(),

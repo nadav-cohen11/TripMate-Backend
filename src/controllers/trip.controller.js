@@ -1,14 +1,30 @@
 import * as TripService from '../services/trip.service.js';
 import HTTP from '../constants/status.js';
+import { getPlaceSuggestions } from '../services/ai.service.js';
 
 export const createTrip = async (req, res, next) => {
   try {
-    const trip = await TripService.createTrip(req.body);
-    res.status(HTTP.StatusCodes.CREATED).json(trip);
+    const tripData = req.body;
+    const newTrip = await TripService.createTrip(tripData);
+
+    const { city, country } = tripData.destination;
+    const { travelStyle, travelDates, participants, tags } = tripData;
+    const itinerary = await getPlaceSuggestions(
+      city,
+      country,
+      travelStyle,
+      travelDates,
+      participants.length,
+      tags
+    );
+    newTrip.ai = itinerary;
+    await newTrip.save();
+    res.status(HTTP.StatusCodes.CREATED).json({ trip: newTrip });
   } catch (error) {
     next(error);
   }
 };
+
 
 export const getTrip = async (req, res, next) => {
   try {

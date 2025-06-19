@@ -77,16 +77,21 @@ export const deleteUser = async (userId) => {
 
 export const updateUser = async (userId, { userData }) => {
   try {
-    const userToUpdate = await User.findById(userId)
-    userData.location.coordinates = userToUpdate.location.coordinates
+    const userToUpdate = await User.findById(userId);
+    if (userToUpdate.location && userData.location) {
+      userData.location.coordinates = userToUpdate.location.coordinates;
+    }
     const user = await User.findByIdAndUpdate(userId, userData, { new: true }).lean();
-    if (!user) throw createError(HTTP.StatusCodes.NOT_FOUND, 'User not found');
+    if (!user) {
+      throw createError(HTTP.StatusCodes.NOT_FOUND, 'User not found');
+    }
     delete user.password;
     return user;
   } catch (error) {
     throw error;
   }
 };
+
 
 export const getUser = async (userId) => {
   try {
