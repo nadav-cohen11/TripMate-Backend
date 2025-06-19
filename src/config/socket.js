@@ -17,7 +17,7 @@ export const initSocket = (server) => {
 
   cron.schedule('00 09 * * *', async () => {
     try {
-      const groupChats = await ChatServices.getGroupChats();
+      const groupChats = await ChatServices.getAllGroupChats();
       for (const g of groupChats) {
         try {
           const suggestion = await TripServices.getTripSuggestion(g.tripId);
@@ -27,13 +27,12 @@ export const initSocket = (server) => {
           }
           const message = await ChatServices.createMessage(g._id, null, msg)
           io.to(g._id.toString()).emit('messageReceived', message)
-          console.log('message')
         } catch (err) {
           continue;
         }
       }
     } catch (error) {
-      console.error('[getTripSuggestions] Error:', err);
+      console.error('[getTripSuggestions] Error:', error);
       throw error
     }
   }, {
