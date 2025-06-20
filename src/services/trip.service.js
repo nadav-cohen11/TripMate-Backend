@@ -71,7 +71,7 @@ export const getTrip = async (tripId) => {
   }
 };
 
-export const getTripSuggestion = async (tripId) => {
+export const getTripSuggestion = async (tripId, retryCount = 0) => {
   try {
     if (!tripId) throw new Error('Trip ID is required');
     const trip = await getTrip(tripId);
@@ -119,11 +119,13 @@ export const getTripSuggestion = async (tripId) => {
 
       
     const response = await axios.get(url, { params });
-    console.log('response', response.data.features)
-    if (!response) getTripSuggestion(tripId)
 
     if (!response.data || !Array.isArray(response.data.features) || !response.data.features.length) {
-      throw new Error('No suggestions found for the given location');
+      if (retryCount < 5) {
+        return await getTripSuggestion(tripId, retryCount + 1); 
+      } else {
+        throw new Error('No suggestions found after several retries');
+      }
     }
     const features = response.data.features;
     const shuffeled = shuffle(features);
