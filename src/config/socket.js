@@ -15,7 +15,7 @@ export const initSocket = (server) => {
 
   const onlineUsers = new Map();
 
-  cron.schedule('00 09 * * *', async () => {
+  cron.schedule('47 10 * * *', async () => {
     try {
       const groupChats = await ChatServices.getAllGroupChats();
       for (const g of groupChats) {

@@ -1,4 +1,6 @@
 import * as TripService from '../services/trip.service.js';
+import * as ChatServices from '../services/chat.service.js';
+
 import HTTP from '../constants/status.js';
 
 export const createTrip = async (req, res, next) => {

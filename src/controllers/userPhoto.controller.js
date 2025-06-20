@@ -116,9 +116,7 @@ export const uploadToInstagram = async (req, res, next) => {
     const { mediaUrl } = req.body
     const user = await getUser(req.user.id)
     const caption = `Take a look at this awesome moment from ${user.fullName}'s adventures!`
-    console.log('a')
     const result = await UserPhotoServices.uploadToInstagram(mediaUrl, caption)
-    console.log(result)
     res.sendStatus(200)
   } catch (error) {
     next(error);
