@@ -44,6 +44,8 @@ export const register = async (req, res, next) => {
       expiresIn: '1h',
     });
 
+    await UserServices.sendWelcomeEmail(req.body.email,req.body.fullName)
+
     res.cookie('token', token, {
       httpOnly: true,
       secure: false,
