@@ -43,8 +43,7 @@ export const register = async (req, res, next) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: '1h',
     });
-    
-    // Send response immediately
+  
     res.cookie('token', token, {
       httpOnly: true,
       secure: false,
@@ -54,7 +53,6 @@ export const register = async (req, res, next) => {
     logger.info('Registration successful', user._id);
     res.status(HTTP.StatusCodes.CREATED).json({ message: 'Registration successful', id: user._id });
     
-    // Send welcome email asynchronously after response is sent
     setImmediate(async () => {
       try {
         await UserServices.sendWelcomeEmail(req.body.email, req.body.fullName);

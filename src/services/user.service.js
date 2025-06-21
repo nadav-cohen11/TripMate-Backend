@@ -206,21 +206,18 @@ export const sendWelcomeEmail = async (toEmail, name) => {
       `
     };
     
-    // Add timeout promise to prevent hanging
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Email sending timeout')), 15000); // 15 second timeout
+      setTimeout(() => reject(new Error('Email sending timeout')), 15000);
     });
     
     const sendPromise = transporter.sendMail(mailOptions);
     
-    // Race between sending email and timeout
     const result = await Promise.race([sendPromise, timeoutPromise]);
     
     logger.info(`Welcome email sent successfully to ${toEmail}`);
     return result;
   } catch (error) {
     logger.error('Error sending welcome email:', error);
-    // Don't throw the error, just log it to prevent blocking the registration
     return null;
   }
 };
