@@ -12,12 +12,23 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: 'tripmate02@gmail.com',
     pass: process.env.MAIL_PASSWORD
+<<<<<<< HEAD
   }
 });
 
 
 
 
+=======
+  },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
+  pool: false,
+  maxConnections: 1,
+  maxMessages: 1
+});
+>>>>>>> 822a3293680149528be8681b383339f5586321ea
 
 export const login = async (email, password, location) => {
   try {
@@ -91,16 +102,21 @@ export const deleteUser = async (userId) => {
 
 export const updateUser = async (userId, { userData }) => {
   try {
-    const userToUpdate = await User.findById(userId)
-    userData.location.coordinates = userToUpdate.location.coordinates
+    const userToUpdate = await User.findById(userId);
+    if (userToUpdate.location && userData.location) {
+      userData.location.coordinates = userToUpdate.location.coordinates;
+    }
     const user = await User.findByIdAndUpdate(userId, userData, { new: true }).lean();
-    if (!user) throw createError(HTTP.StatusCodes.NOT_FOUND, 'User not found');
+    if (!user) {
+      throw createError(HTTP.StatusCodes.NOT_FOUND, 'User not found');
+    }
     delete user.password;
     return user;
   } catch (error) {
     throw error;
   }
 };
+
 
 export const getUser = async (userId) => {
   try {
@@ -166,6 +182,7 @@ export const getUserByEmail = async (email) => {
   }
 }
 
+<<<<<<< HEAD
 export const sendWelcomeEmail = (toEmail, name) => {
   const mailOptions = {
     from: '"TripMate" <noreply@tripmate.com>',
@@ -199,4 +216,53 @@ export const sendWelcomeEmail = (toEmail, name) => {
   };
 
   return transporter.sendMail(mailOptions);
+=======
+export const sendWelcomeEmail = async (toEmail, name) => {
+  try {
+    const mailOptions = {
+      from: '"TripMate" <noreply@tripmate.com>',
+      to: toEmail,
+      subject: 'Welcome to TripMate!',
+      text: `Hi ${name},`,
+      html: `
+        <div style="font-family: Arial, sans-serif; background: #f6f8fa; padding: 40px;">
+          <div style="max-width: 500px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 32px;">
+            <div style="text-align: center;">
+              <img src="https://res.cloudinary.com/dnpsnkuyi/image/upload/v1750433782/TripMate_logo_x0hndn.png" alt="TripMate Logo" style="width: 150px; margin-bottom: 16px;" />
+              <h1 style="color: #2d7ff9; margin-bottom: 8px;">Welcome to TripMate, ${name}!</h1>
+            </div>
+            <p style="font-size: 16px; color: #333;">
+              We're thrilled to have you join our travel community. With TripMate, you can connect with fellow travelers, share your adventures, and discover new destinations.
+            </p>
+            <p style="font-size: 16px; color: #333;">
+              Start exploring now and make your next trip unforgettable!
+            </p>
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="https://tripmateapp.cloud" style="background: #2d7ff9; color: #fff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                Get Started
+              </a>
+            </div>
+            <p style="font-size: 14px; color: #888; text-align: center;">
+              If you have any questions, just send us email to tripmate0506@gmail.com we are here to help!
+            </p>
+          </div>
+        </div>
+      `
+    };
+    
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Email sending timeout')), 15000);
+    });
+    
+    const sendPromise = transporter.sendMail(mailOptions);
+    
+    const result = await Promise.race([sendPromise, timeoutPromise]);
+    
+    logger.info(`Welcome email sent successfully to ${toEmail}`);
+    return result;
+  } catch (error) {
+    logger.error('Error sending welcome email:', error);
+    return null;
+  }
+>>>>>>> 822a3293680149528be8681b383339f5586321ea
 };

@@ -43,17 +43,30 @@ export const register = async (req, res, next) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: '1h',
     });
+<<<<<<< HEAD
 
     await UserServices.sendWelcomeEmail(req.body.email,req.body.fullName)
 
+=======
+  
+>>>>>>> 822a3293680149528be8681b383339f5586321ea
     res.cookie('token', token, {
       httpOnly: true,
       secure: false,
       sameSite: 'strict',
       maxAge: 3600000,
     });
-    logger.info('Registration successful1', user._id);
+    logger.info('Registration successful', user._id);
     res.status(HTTP.StatusCodes.CREATED).json({ message: 'Registration successful', id: user._id });
+    
+    setImmediate(async () => {
+      try {
+        await UserServices.sendWelcomeEmail(req.body.email, req.body.fullName);
+      } catch (emailError) {
+        logger.error('Failed to send welcome email for user:', user._id, emailError);
+      }
+    });
+    
   } catch (error) {
     next(error);
   }
@@ -95,14 +108,14 @@ export const deleteUser = async (req, res, next) => {
   }
 };
 
-export const updateUser = async (req, res, next) => {
-  try {
-    const updated = await UserServices.updateUser(req.user.id, req.body);
-    res.status(HTTP.StatusCodes.OK).json(updated);
-  } catch (error) {
-    next(error);
-  }
-};
+  export const updateUser = async (req, res, next) => {
+    try {
+      const updated = await UserServices.updateUser(req.user.id, req.body);
+      res.status(HTTP.StatusCodes.OK).json(updated);
+    } catch (error) {
+      next(error);
+    }
+  };
 
 export const getAllUsers = async (req, res, next) => {
   try {
