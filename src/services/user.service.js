@@ -14,6 +14,7 @@ const transporter = nodemailer.createTransport({
     pass: process.env.MAIL_PASSWORD
   }
 });
+logger.info('Passwordmail', process.env.MAIL_PASSWORD)
 
 export const login = async (email, password, location) => {
   try {
