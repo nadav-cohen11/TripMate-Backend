@@ -191,9 +191,16 @@ export const getAllReels = async (cuurUserId) => {
     }, {});
 
     const reels = users.flatMap(user => {
-      const profilePhoto = user.photos.find(photo =>
-        user.profilePhotoId && photo.public_id.endsWith(user.profilePhotoId)
-      );
+      let profilePhoto = null;
+    
+      if (user.profilePhotoId && user.photos?.length > 0) {
+        profilePhoto = user.photos.find(photo => photo.public_id === user.profilePhotoId);
+      }
+    
+      if (!profilePhoto && user.profilePhotoId) {
+        const cloudinaryUrl = `https://res.cloudinary.com/dnpsnkuyi/image/upload/${user.profilePhotoId}`;
+        profilePhoto = { url: cloudinaryUrl };
+      }
 
       return user.reels.map(reel => ({
         _id: reel._id,
