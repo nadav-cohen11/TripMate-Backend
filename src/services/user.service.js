@@ -5,7 +5,9 @@ import bcrypt from 'bcrypt'
 import { isValidCoordinates } from '../utils/cordinatesValidator.js';
 import logger from '../config/logger.js';
 import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -173,51 +175,58 @@ export const getUserByEmail = async (email) => {
   }
 }
 
-export const sendWelcomeEmail = async (toEmail, name) => {
+export const sendWelcomeEmail = async (email, name) => {
   try {
-    const mailOptions = {
-      from: '"TripMate" <noreply@tripmate.com>',
-      to: toEmail,
+    await sendWithSendGrid({
+      to: email,
+      from: 'tripmate02@gmail.com',
       subject: 'Welcome to TripMate!',
-      text: `Hi ${name},`,
+      text: 'Welcome to TripMate! We\'re excited to have you on board.',
       html: `
-        <div style="font-family: Arial, sans-serif; background: #f6f8fa; padding: 40px;">
-          <div style="max-width: 500px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 32px;">
-            <div style="text-align: center;">
-              <img src="https://res.cloudinary.com/dnpsnkuyi/image/upload/v1750433782/TripMate_logo_x0hndn.png" alt="TripMate Logo" style="width: 150px; margin-bottom: 16px;" />
-              <h1 style="color: #2d7ff9; margin-bottom: 8px;">Welcome to TripMate, ${name}!</h1>
-            </div>
-            <p style="font-size: 16px; color: #333;">
-              We're thrilled to have you join our travel community. With TripMate, you can connect with fellow travelers, share your adventures, and discover new destinations.
-            </p>
-            <p style="font-size: 16px; color: #333;">
-              Start exploring now and make your next trip unforgettable!
-            </p>
-            <div style="text-align: center; margin: 32px 0;">
-              <a href="https://tripmateapp.cloud" style="background: #2d7ff9; color: #fff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">
-                Get Started
-              </a>
-            </div>
-            <p style="font-size: 14px; color: #888; text-align: center;">
-              If you have any questions, just send us email to tripmate0506@gmail.com we are here to help!
-            </p>
+      <div style="font-family: Arial, sans-serif; background: #f6f8fa; padding: 40px;">
+        <div style="max-width: 500px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 32px;">
+          <div style="text-align: center;">
+            <img src="https://res.cloudinary.com/dnpsnkuyi/image/upload/v1750433782/TripMate_logo_x0hndn.png" alt="TripMate Logo" style="width: 150px; margin-bottom: 16px;" />
+            <h1 style="color: #2d7ff9; margin-bottom: 8px;">Welcome to TripMate, ${name}!</h1>
           </div>
+          <p style="font-size: 16px; color: #333;">
+            We're thrilled to have you join our travel community. With TripMate, you can connect with fellow travelers, share your adventures, and discover new destinations.
+          </p>
+          <p style="font-size: 16px; color: #333;">
+            Start exploring now and make your next trip unforgettable!
+          </p>
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="https://tripmateapp.cloud" style="background: #2d7ff9; color: #fff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">
+              Get Started
+            </a>
+          </div>
+          <p style="font-size: 14px; color: #888; text-align: center;">
+            If you have any questions, just send us email to tripmate02@gmail.com we are here to help!
+          </p>
         </div>
-      `
-    };
-    
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Email sending timeout')), 15000);
+      </div>
+    `
     });
-    
-    const sendPromise = transporter.sendMail(mailOptions);
-    
-    const result = await Promise.race([sendPromise, timeoutPromise]);
-    
-    logger.info(`Welcome email sent successfully to ${toEmail}`);
-    return result;
+    return true;
   } catch (error) {
-    logger.error('Error sending welcome email:', error);
-    return null;
+    logger.error('Failed to send welcome email:', error);
+    return false;
+  }
+};
+
+export const sendWithSendGrid = async ({ to, from, subject, text, html }) => {
+  const msg = {
+    to,
+    from,
+    subject,
+    text,
+    html,
+  };
+  try {
+    await sgMail.send(msg);
+    return true;
+  } catch (error) {
+    logger.error('SendGrid email error:', error);
+    return false;
   }
 };

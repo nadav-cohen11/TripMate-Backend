@@ -54,11 +54,7 @@ export const register = async (req, res, next) => {
     res.status(HTTP.StatusCodes.CREATED).json({ message: 'Registration successful', id: user._id });
     
     setImmediate(async () => {
-      try {
-        await UserServices.sendWelcomeEmail(req.body.email, req.body.fullName);
-      } catch (emailError) {
-        logger.error('Failed to send welcome email for user:', user._id, emailError);
-      }
+      await UserServices.sendWelcomeEmail(req.body.email, req.body.fullName);
     });
     
   } catch (error) {
