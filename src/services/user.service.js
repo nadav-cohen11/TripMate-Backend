@@ -15,10 +15,6 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-
-
-
-
 export const login = async (email, password, location) => {
   try {
     logger.info("location", location)
@@ -171,7 +167,8 @@ export const getUserByEmail = async (email) => {
   }
 }
 
-export const sendWelcomeEmail = (toEmail, name) => {
+export const sendWelcomeEmail = async (toEmail, name) => {
+  try {
   const mailOptions = {
     from: '"TripMate" <noreply@tripmate.com>',
     to: toEmail,
@@ -202,6 +199,10 @@ export const sendWelcomeEmail = (toEmail, name) => {
       </div>
     `
   };
-
-  return transporter.sendMail(mailOptions);
+  const result = await transporter.sendMail(mailOptions);
+    logger.info(`Welcome email sent successfully to ${toEmail}`);
+    return result;
+  } catch (error) {
+    throw error;
+  }
 };
