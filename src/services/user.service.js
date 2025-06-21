@@ -14,7 +14,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.MAIL_PASSWORD
   }
 });
-logger.info('Passwordmail', process.env.MAIL_PASSWORD)
 
 export const login = async (email, password, location) => {
   try {
@@ -204,6 +203,7 @@ export const sendWelcomeEmail = async (toEmail, name) => {
     logger.info(`Welcome email sent successfully to ${toEmail}`);
     return result;
   } catch (error) {
+    logger.error('Error sending welcome email:', error);
     throw error;
   }
 };

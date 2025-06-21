@@ -43,8 +43,12 @@ export const register = async (req, res, next) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: '1h',
     });
-
-    await UserServices.sendWelcomeEmail(req.body.email,req.body.fullName)
+    
+    try {
+      await UserServices.sendWelcomeEmail(req.body.email, req.body.fullName);
+    } catch (emailError) {
+      logger.error('Failed to send welcome email for user:', user._id, emailError);
+    }
 
     res.cookie('token', token, {
       httpOnly: true,
@@ -52,7 +56,7 @@ export const register = async (req, res, next) => {
       sameSite: 'strict',
       maxAge: 3600000,
     });
-    logger.info('Registration successful1', user._id);
+    logger.info('Registration successful', user._id);
     res.status(HTTP.StatusCodes.CREATED).json({ message: 'Registration successful', id: user._id });
   } catch (error) {
     next(error);
