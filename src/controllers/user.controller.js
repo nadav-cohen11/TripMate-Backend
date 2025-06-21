@@ -95,14 +95,14 @@ export const deleteUser = async (req, res, next) => {
   }
 };
 
-export const updateUser = async (req, res, next) => {
-  try {
-    const updated = await UserServices.updateUser(req.user.id, req.body);
-    res.status(HTTP.StatusCodes.OK).json(updated);
-  } catch (error) {
-    next(error);
-  }
-};
+  export const updateUser = async (req, res, next) => {
+    try {
+      const updated = await UserServices.updateUser(req.user.id, req.body);
+      res.status(HTTP.StatusCodes.OK).json(updated);
+    } catch (error) {
+      next(error);
+    }
+  };
 
 export const getAllUsers = async (req, res, next) => {
   try {

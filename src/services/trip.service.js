@@ -1,5 +1,6 @@
 import Trip from '../models/trip.model.js';
 import axios from 'axios';
+import { getPlaceSuggestions } from './ai.service.js';
 
 const validateTripData = (tripData) => {
   if (!tripData) throw new Error('Trip data is required');
@@ -25,6 +26,24 @@ export const createTrip = async (tripData) => {
       return participant;
     });
     const trip = new Trip(tripData);
+    
+    if (!trip.aiGenerated) {
+      const { city, country } = tripData.destination;
+      const { travelStyle, travelDates, participants, tags = [] } = tripData;
+
+      const aiText = await getPlaceSuggestions(
+        city,
+        country,
+        travelStyle || 'balanced',
+        travelDates,
+        participants.length,
+        tags
+      );
+
+      trip.ai = aiText;
+      trip.aiGenerated = true;
+    }
+
     await trip.save();
     return trip;
   } catch (error) {
