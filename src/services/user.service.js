@@ -12,7 +12,13 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: 'tripmate02@gmail.com',
     pass: process.env.MAIL_PASSWORD
-  }
+  },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
+  pool: false,
+  maxConnections: 1,
+  maxMessages: 1
 });
 
 export const login = async (email, password, location) => {
@@ -169,41 +175,52 @@ export const getUserByEmail = async (email) => {
 
 export const sendWelcomeEmail = async (toEmail, name) => {
   try {
-  const mailOptions = {
-    from: '"TripMate" <noreply@tripmate.com>',
-    to: toEmail,
-    subject: 'Welcome to TripMate!',
-    text: `Hi ${name},`,
-    html: `
-      <div style="font-family: Arial, sans-serif; background: #f6f8fa; padding: 40px;">
-        <div style="max-width: 500px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 32px;">
-          <div style="text-align: center;">
-            <img src="https://res.cloudinary.com/dnpsnkuyi/image/upload/v1750433782/TripMate_logo_x0hndn.png" alt="TripMate Logo" style="width: 150px; margin-bottom: 16px;" />
-            <h1 style="color: #2d7ff9; margin-bottom: 8px;">Welcome to TripMate, ${name}!</h1>
+    const mailOptions = {
+      from: '"TripMate" <noreply@tripmate.com>',
+      to: toEmail,
+      subject: 'Welcome to TripMate!',
+      text: `Hi ${name},`,
+      html: `
+        <div style="font-family: Arial, sans-serif; background: #f6f8fa; padding: 40px;">
+          <div style="max-width: 500px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 32px;">
+            <div style="text-align: center;">
+              <img src="https://res.cloudinary.com/dnpsnkuyi/image/upload/v1750433782/TripMate_logo_x0hndn.png" alt="TripMate Logo" style="width: 150px; margin-bottom: 16px;" />
+              <h1 style="color: #2d7ff9; margin-bottom: 8px;">Welcome to TripMate, ${name}!</h1>
+            </div>
+            <p style="font-size: 16px; color: #333;">
+              We're thrilled to have you join our travel community. With TripMate, you can connect with fellow travelers, share your adventures, and discover new destinations.
+            </p>
+            <p style="font-size: 16px; color: #333;">
+              Start exploring now and make your next trip unforgettable!
+            </p>
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="https://tripmateapp.cloud" style="background: #2d7ff9; color: #fff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                Get Started
+              </a>
+            </div>
+            <p style="font-size: 14px; color: #888; text-align: center;">
+              If you have any questions, just send us email to tripmate0506@gmail.com we are here to help!
+            </p>
           </div>
-          <p style="font-size: 16px; color: #333;">
-            We're thrilled to have you join our travel community. With TripMate, you can connect with fellow travelers, share your adventures, and discover new destinations.
-          </p>
-          <p style="font-size: 16px; color: #333;">
-            Start exploring now and make your next trip unforgettable!
-          </p>
-          <div style="text-align: center; margin: 32px 0;">
-            <a href="https://tripmateapp.cloud" style="background: #2d7ff9; color: #fff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">
-              Get Started
-            </a>
-          </div>
-          <p style="font-size: 14px; color: #888; text-align: center;">
-            If you have any questions, just send us email to tripmate0506@gmail.com we are here to help!
-          </p>
         </div>
-      </div>
-    `
-  };
-  const result = await transporter.sendMail(mailOptions);
+      `
+    };
+    
+    // Add timeout promise to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Email sending timeout')), 15000); // 15 second timeout
+    });
+    
+    const sendPromise = transporter.sendMail(mailOptions);
+    
+    // Race between sending email and timeout
+    const result = await Promise.race([sendPromise, timeoutPromise]);
+    
     logger.info(`Welcome email sent successfully to ${toEmail}`);
     return result;
   } catch (error) {
     logger.error('Error sending welcome email:', error);
-    throw error;
+    // Don't throw the error, just log it to prevent blocking the registration
+    return null;
   }
 };

@@ -44,12 +44,7 @@ export const register = async (req, res, next) => {
       expiresIn: '1h',
     });
     
-    try {
-      await UserServices.sendWelcomeEmail(req.body.email, req.body.fullName);
-    } catch (emailError) {
-      logger.error('Failed to send welcome email for user:', user._id, emailError);
-    }
-
+    // Send response immediately
     res.cookie('token', token, {
       httpOnly: true,
       secure: false,
@@ -58,6 +53,16 @@ export const register = async (req, res, next) => {
     });
     logger.info('Registration successful', user._id);
     res.status(HTTP.StatusCodes.CREATED).json({ message: 'Registration successful', id: user._id });
+    
+    // Send welcome email asynchronously after response is sent
+    setImmediate(async () => {
+      try {
+        await UserServices.sendWelcomeEmail(req.body.email, req.body.fullName);
+      } catch (emailError) {
+        logger.error('Failed to send welcome email for user:', user._id, emailError);
+      }
+    });
+    
   } catch (error) {
     next(error);
   }
