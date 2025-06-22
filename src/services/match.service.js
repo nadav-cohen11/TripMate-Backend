@@ -4,6 +4,7 @@ import HTTP from '../constants/status.js';
 import User from '../models/user.model.js';
 import * as UserServices from '../services/user.service.js'
 import mongoose from 'mongoose';
+import logger from '../config/logger.js';
 
 export const createOrAcceptMatch = async (user1Id, user2Id, compatibilityScore = 35) => {
   try {
@@ -190,8 +191,9 @@ export const getNonMatchedNearbyUsersWithReviews = async (userId, maxDistanceInM
     const excludedUserIds = [...new Set([...matchedUserIds, ...pendingSentUserIds, userId])];
 
     const currentUser = await User.findById(userId);
-    if (!currentUser || !currentUser.location?.coordinates) {
-      throw createError(HTTP.StatusCodes.NOT_FOUND, 'User location not found');
+    if (!currentUser || !currentUser.location?.coordinates || currentUser.location.coordinates.length < 2) {
+      logger.warn(`User ${userId} has no valid location. Returning empty nearby users list.`);
+      return [];
     }
 
     const nearbyUsers = await User.aggregate([
