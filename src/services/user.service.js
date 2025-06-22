@@ -31,7 +31,7 @@ export const login = async (email, password, location) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw createError(HTTP.StatusCodes.UNAUTHORIZED, 'Invalid email or password');
     if (location.length === 0 || !isValidCoordinates(location)) {
-      user.location.coordinates = [ 31.96516656696053, 34.79766117754824 ]; 
+      user.location.coordinates = [ 31.970756, 34.771637 ]; 
       await user.save();
     }
     else {
@@ -54,24 +54,25 @@ export const createUser = async (userData) => {
     const hashedPassword = await bcrypt.hash(userData.password, salt);
 
     const location = userData.location;
-
     if (!location) {
       throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid or missing location');
     }
     else {
-      userData.location.coordinates = [ 31.96516656696053, 34.79766117754824 ];
+      userData.location.coordinates = [ 31.970756, 34.771637 ];
     }
 
     const newUser = new User({
       ...userData,
       password: hashedPassword,
       location: {
+        country: userData.location.country,
+        city: userData.location.city,
         type: 'Point',
         coordinates: [location.coordinates[0], location.coordinates[1]],
       },
       socialLinks: {
-        instagram: userData.instagram || '',
-        facebook: userData.facebook || '',
+        instagram: userData.socialLinks.instagram || '',
+        facebook: userData.socialLinks.facebook || '',
       },
     });
 

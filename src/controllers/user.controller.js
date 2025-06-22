@@ -24,7 +24,6 @@ export const login = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
   try {
-
     res.clearCookie('token', {
       httpOnly: true,
       secure: false,
