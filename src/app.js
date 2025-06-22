@@ -13,6 +13,7 @@ import messagesRoutes from './routes/message.route.js';
 import userPhotoRoutes from './routes/userPhoto.route.js';
 import qrRoutes from './routes/qr.routes.js';
 import aiRoutes from './routes/ai.routes.js';
+import healthRoutes from './routes/health.route.js';
 import cookieParser from 'cookie-parser';
 import * as dotenv from 'dotenv';
 
@@ -29,6 +30,7 @@ const init = async () => {
         app.use(cookieParser());
 
         app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+        app.use('/api/health', healthRoutes);
         app.use('/api/users', usersRoutes);
         app.use('/api/matches', matchesRoutes);
         app.use('/api/trips', tripsRoutes);
@@ -38,6 +40,7 @@ const init = async () => {
         app.use('/api/qr', qrRoutes);
         app.use('/api/ai', aiRoutes);
         app.use(errorHandler)
+        
 
         logger.info('app initialized');
     } catch (error) {

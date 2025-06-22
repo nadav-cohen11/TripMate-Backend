@@ -15,7 +15,7 @@ export const initSocket = (server) => {
 
   const onlineUsers = new Map();
 
-  cron.schedule('47 10 * * *', async () => {
+  cron.schedule('47 10 * * *', async () => {  
     try {
       const groupChats = await ChatServices.getAllGroupChats();
       for (const g of groupChats) {
@@ -31,9 +31,9 @@ export const initSocket = (server) => {
           continue;
         }
       }
-    } catch (error) {
-      console.error('[getTripSuggestions] Error:', error);
-      throw error
+    } catch (err) {
+      console.error('[getTripSuggestions] Error:', err);
+      throw err
     }
   }, {
     timezone: 'Asia/Jerusalem'
