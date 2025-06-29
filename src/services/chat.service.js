@@ -96,7 +96,7 @@ export const getChatsByUser = async (userId) => {
   try {
     if (!userId) throw new Error('User ID is required');
     return await Chat.find({ participants: userId, isArchived: false })
-      .populate('participants', 'fullName _id')
+      .populate('participants', 'fullName _id photos')
       .populate({
         path: 'messages',
         populate: { path: 'sender', select: 'fullName _id' }
