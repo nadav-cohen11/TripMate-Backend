@@ -15,12 +15,13 @@ export const AgeRangeSchema = new Schema({
 export const TravelPreferencesSchema = new Schema({
   destinations: [{ type: String, trim: true }],
   travelDates: TravelDatesSchema,
-  groupSize: { type: Number, min: 0 },
+  groupSize: { type: Number, min: 0, default: 0 },
   ageRange: AgeRangeSchema,
   interests: [{ type: String, trim: true, lowercase: true }],
   travelStyle: {
     type: String,
     enum: ['budget', 'luxury', 'adventure', 'cultural', 'nature', 'social'],
+    default: 'budget',
   },
 }, { _id: false });
 
