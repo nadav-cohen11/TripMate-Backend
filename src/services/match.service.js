@@ -9,8 +9,10 @@ import logger from '../config/logger.js';
 export const createOrAcceptMatch = async (user1Id, user2Id, compatibilityScore = 35) => {
   try {
     const existingPendingMatch = await Match.findOne({
-      user1Id: user2Id,
-      user2Id: user1Id,
+      $or: [
+      { user1Id, user2Id },
+      { user1Id: user2Id, user2Id: user1Id }
+      ],
       status: 'pending',
     });
 
@@ -164,6 +166,33 @@ export const blockMatch = async (matchId) => {
     }
     match.isBlocked = true;
     return await match.save();
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+export const blockMatchByUsers = async (user1Id, user2Id) => {
+  try {
+    const match = await Match.find({
+      $or: [
+        { user1Id, user2Id },
+        { user1Id: user2Id, user2Id: user1Id }
+      ]
+    });
+    if (!match || match.length === 0) {
+      throw createError(HTTP.StatusCodes.NOT_FOUND, 'Match not found');
+    }
+    const updated = await Match.updateMany(
+      {
+        $or: [
+          { user1Id, user2Id },
+          { user1Id: user2Id, user2Id: user1Id }
+        ]
+      },
+      { $set: { isBlocked: true } }
+    );
+    return updated;
   } catch (error) {
     throw error;
   }

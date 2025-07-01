@@ -186,7 +186,7 @@ export const sendWelcomeEmail = async (email, name) => {
       <div style="font-family: Arial, sans-serif; background: #f6f8fa; padding: 40px;">
         <div style="max-width: 500px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 32px;">
           <div style="text-align: center;">
-            <img src="https://res.cloudinary.com/dnpsnkuyi/image/upload/v1750433782/TripMate_logo_x0hndn.png" alt="TripMate Logo" style="width: 150px; margin-bottom: 16px;" />
+            <img src="https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/v1750433782/TripMate_logo_x0hndn.png" alt="TripMate Logo" style="width: 150px; margin-bottom: 16px;" />
             <h1 style="color: #2d7ff9; margin-bottom: 8px;">Welcome to TripMate, ${name}!</h1>
           </div>
           <p style="font-size: 16px; color: #333;">

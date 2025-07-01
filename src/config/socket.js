@@ -152,18 +152,21 @@ export const initSocket = (server) => {
       }
     });
 
-    socket.on('blockUser', async ({ chatId, user1Id, user2Id }) => {
+    socket.on('blockUser', async ({ chatId, user1Id, user2Id }, callback) => {
       try {
-        const chat = await ChatServices.archiveChat(chatId)
-        await MatchServices.blockMatch(user1Id, user2Id)
+        const chat = await ChatServices.archiveChat(chatId);
+        await MatchServices.blockMatchByUsers(user1Id, user2Id);
+
         const socketId = onlineUsers.get(user2Id.toString());
         if (socketId) {
           io.to(socketId).emit('gotBlocked', { userId: user1Id, chat });
         }
+
+        if (callback) callback();
       } catch (err) {
         console.error('Error in blockUser:', err);
       }
-    })
+    });
 
     socket.on('leaveTrip', async ({ tripId, chatId, userId }) => {
       try {

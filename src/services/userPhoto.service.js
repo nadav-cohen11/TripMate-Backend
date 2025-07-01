@@ -198,7 +198,7 @@ export const getAllReels = async (cuurUserId) => {
       }
     
       if (!profilePhoto && user.profilePhotoId) {
-        const cloudinaryUrl = `https://res.cloudinary.com/dnpsnkuyi/image/upload/${user.profilePhotoId}`;
+        const cloudinaryUrl = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${user.profilePhotoId}`;
         profilePhoto = { url: cloudinaryUrl };
       }
 
