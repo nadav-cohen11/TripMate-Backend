@@ -37,10 +37,10 @@ export const findOrCreateChat = async (userA, userB) => {
       participants: { $all: [userA, userB], $size: 2 },
       isGroupChat: false,
       isArchived: false
-    });
+    }).populate('participants', 'fullName _id photos')
     if (!chat) {
       chat = await Chat.create({ participants: [userA, userB] });
-      chat = await chat.populate('participants', 'fullName _id');
+      chat = await chat.populate('participants', 'fullName _id photos');
     }
     return chat;
   } catch (error) {
