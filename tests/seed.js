@@ -49,7 +49,7 @@ function getRandomPointInIsraeliBox() {
   const centerLat = 34.79766117754824;
   const centerLon = 31.96516656696053;
 
-  const smallStep = 1e-8; 
+  const smallStep = 1e-2; 
 
   const lat = centerLat + (latCounter++ * smallStep);
   const lon = centerLon + (lonCounter++ * smallStep);

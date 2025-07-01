@@ -12,19 +12,28 @@ const storage = new CloudinaryStorage({
     const fieldToConfig = {
       profile: {
         folder: 'user-profile',
-        transformation: [{ width: 500, height: 500, crop: 'limit' }],
+        transformation: [
+          { width: 500, height: 500, crop: 'limit' },
+          { quality: 'auto:low', fetch_format: 'auto' }
+        ],
         resource_type: 'image',
         allowed_formats: ['jpg', 'jpeg', 'png', 'heic'],
       },
       photos: {
         folder: 'user-gallery',
-        transformation: [{ width: 1024, height: 1024, crop: 'limit' }],
+        transformation: [
+          { width: 500, height: 500, crop: 'limit' },
+          { quality: 'auto:low', fetch_format: 'auto' }
+        ],
         resource_type: 'image',
         allowed_formats: ['jpg', 'jpeg', 'png', 'heic'],
       },
       reel: {
         folder: 'user-reels',
-        transformation: [],
+        transformation: [
+          { width: 720, crop: 'limit' },
+          { quality: 'auto:low', fetch_format: 'auto' } 
+        ],
         resource_type: 'auto',
         allowed_formats: ['jpg', 'jpeg', 'png', 'mp4', 'mov', 'avi', 'heic'],
       },

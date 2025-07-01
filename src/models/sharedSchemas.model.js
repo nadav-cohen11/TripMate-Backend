@@ -15,7 +15,7 @@ export const AgeRangeSchema = new Schema({
 export const TravelPreferencesSchema = new Schema({
   destinations: [{ type: String, trim: true }],
   travelDates: TravelDatesSchema,
-  groupSize: { type: Number, min: 1 },
+  groupSize: { type: Number, min: 0 },
   ageRange: AgeRangeSchema,
   interests: [{ type: String, trim: true, lowercase: true }],
   travelStyle: {

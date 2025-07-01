@@ -231,9 +231,8 @@ export const fetchNearbyEvents = async (lat, lon, keyword) => {
       latlong: `${lat},${lon}`,
       radius: 500,
       unit: 'km',
-      keyword: keyword || '',
+      segmentName: keyword,
     };
-
     const response = await axios.get(url, { params });
     const events = response.data._embedded?.events || [];
 
