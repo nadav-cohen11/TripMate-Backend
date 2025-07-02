@@ -212,12 +212,17 @@ export const getNonMatchedNearbyUsersWithReviews = async (userId, maxDistanceInM
       $or: [{ user1Id: userId }, { user2Id: userId }],
     }).distinct('user1Id user2Id');
 
-    const pendingSentUserIds = await Match.find({
+    const pendingSendUserIds = await Match.find({
       user1Id: userId,
       status: 'pending',
     }).distinct('user2Id');
 
-    const excludedUserIds = [...new Set([...matchedUserIds, ...pendingSentUserIds, userId])];
+    const pendingSentUserIds = await Match.find({
+      user2Id: userId,
+      status: 'pending',
+    }).distinct('user1Id');
+
+    const excludedUserIds = [...new Set([...matchedUserIds, ...pendingSendUserIds, ...pendingSentUserIds, userId])];
 
     const currentUser = await User.findById(userId);
     if (!currentUser || !currentUser.location?.coordinates || currentUser.location.coordinates.length < 2) {
