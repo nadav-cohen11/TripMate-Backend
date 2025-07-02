@@ -10,8 +10,8 @@ export const createOrAcceptMatch = async (user1Id, user2Id, compatibilityScore =
   try {
     const existingPendingMatch = await Match.findOne({
       $or: [
-      { user1Id, user2Id },
-      { user1Id: user2Id, user2Id: user1Id }
+        { user1Id, user2Id },
+        { user1Id: user2Id, user2Id: user1Id }
       ],
       status: 'pending',
     });
@@ -208,16 +208,28 @@ export const getNonMatchedNearbyUsersWithReviews = async (userId, maxDistanceInM
       throw createError(HTTP.StatusCodes.BAD_REQUEST, 'maxDistanceInMeters must be greater than 0');
     }
 
-    const matchedUserIds = await Match.find({
-      $or: [{ user1Id: userId }, { user2Id: userId }],
-    }).distinct('user1Id user2Id');
+    const matches = await Match.find({
+      $or: [
+        { user1Id: userId },
+        { user2Id: userId }
+      ]
+    });
 
-    const pendingSentUserIds = await Match.find({
+    const matchedUserIds = matches.map(m =>
+      m.user1Id.equals(userId) ? m.user2Id : m.user1Id
+    );
+
+    const pendingSendUserIds = await Match.find({
       user1Id: userId,
       status: 'pending',
     }).distinct('user2Id');
 
-    const excludedUserIds = [...new Set([...matchedUserIds, ...pendingSentUserIds, userId])];
+    const pendingSentUserIds = await Match.find({
+      user2Id: userId,
+      status: 'pending',
+    }).distinct('user1Id');
+
+    const excludedUserIds = [...new Set([...matchedUserIds, ...pendingSendUserIds, ...pendingSentUserIds, userId])];
 
     const currentUser = await User.findById(userId);
     if (!currentUser || !currentUser.location?.coordinates || currentUser.location.coordinates.length < 2) {
@@ -349,7 +361,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     user2.languagesSpoken.includes(lang)
   );
   if (commonLanguages.length > 0) {
-    const langScore = commonLanguages.length * 13; 
+    const langScore = commonLanguages.length * 13;
     score += langScore;
     details.languages = langScore;
   }
@@ -358,7 +370,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   const user2Dest = user2.travelPreferences?.destinations || [];
   const commonDest = user1Dest.filter(dest => user2Dest.includes(dest));
   if (commonDest.length > 0) {
-    const destScore = commonDest.length * 18; 
+    const destScore = commonDest.length * 18;
     score += destScore;
     details.destinations = destScore;
   }
@@ -369,7 +381,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     const latestStart = new Date(Math.max(new Date(u1Dates.start), new Date(u2Dates.start)));
     const earliestEnd = new Date(Math.min(new Date(u1Dates.end), new Date(u2Dates.end)));
     if (latestStart <= earliestEnd) {
-      score += 24; 
+      score += 24;
       details.dates = 24;
     }
   }
@@ -377,7 +389,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   const u1Group = user1.travelPreferences?.groupSize;
   const u2Group = user2.travelPreferences?.groupSize;
   if (u1Group && u2Group && Math.abs(u1Group - u2Group) <= 1) {
-    score += 16; 
+    score += 16;
     details.groupSize = 16;
   }
 
@@ -386,7 +398,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   if (u1Age && u2Age) {
     const overlap = Math.max(0, Math.min(u1Age.max, u2Age.max) - Math.max(u1Age.min, u2Age.min));
     if (overlap > 0) {
-      score += 16; 
+      score += 16;
       details.ageRange = 16;
     }
   }
@@ -395,7 +407,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
   const u2Interests = user2.travelPreferences?.interests || [];
   const commonInterests = u1Interests.filter(i => u2Interests.includes(i));
   if (commonInterests.length > 0) {
-    const interestsScore = commonInterests.length * 13; 
+    const interestsScore = commonInterests.length * 13;
     score += interestsScore;
     details.interests = interestsScore;
   }
@@ -414,7 +426,7 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     user2.adventureStyle &&
     user1.adventureStyle === user2.adventureStyle
   ) {
-    score += 14; 
+    score += 14;
     details.adventureStyle = 14;
   }
 
@@ -423,18 +435,18 @@ export const calculateCompatibilityScoresForMatch = async (user1Id, user2Id) => 
     user2.location?.country &&
     user1.location.country === user2.location.country
   ) {
-    score += 12; 
+    score += 12;
     details.country = 12;
     if (
       user1.location.city &&
       user2.location.city &&
       user1.location.city === user2.location.city
     ) {
-      score += 12; 
+      score += 12;
       details.city = 12;
     }
   }
 
-  score = Math.max(28, Math.min(score, 99)); 
+  score = Math.max(28, Math.min(score, 99));
   return { score, details };
 };
