@@ -238,7 +238,7 @@ export const enrichTripWithAI = async (tripId, tripData) => {
       participants.length,
       tags
     );
-    const updated = await Trip.findByIdAndUpdate(tripId, {
+    await Trip.findByIdAndUpdate(tripId, {
       ai: aiText,
       aiGenerated: true,
     }, { new: true });
