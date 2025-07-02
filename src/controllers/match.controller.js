@@ -5,7 +5,7 @@ export const createOrAcceptMatch = async (req, res, next) => {
   try {
     const user1Id = req.user.id;
     const { user2Id } = req.body;
-    const { score } =  await MatchServices.calculateCompatibilityScoresForMatch(user1Id, user2Id)
+    const { score } = await MatchServices.calculateCompatibilityScoresForMatch(user1Id, user2Id)
     const match = await MatchServices.createOrAcceptMatch(user1Id, user2Id, score);
     res.status(HTTP.StatusCodes.CREATED).json(match.status);
   } catch (error) {
@@ -27,7 +27,7 @@ export const acceptMatch = async (req, res, next) => {
 export const getConfirmedMatches = async (req, res, next) => {
   try {
     const confirmeMatches = await MatchServices.getConfirmedMatches(req.user.id);
-    res.status(HTTP.StatusCodes.OK).json({matches:confirmeMatches,userId:req.user.id});
+    res.status(HTTP.StatusCodes.OK).json({ matches: confirmeMatches, userId: req.user.id });
   } catch (error) {
     next(error);
   }
