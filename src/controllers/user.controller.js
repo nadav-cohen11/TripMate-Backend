@@ -70,6 +70,16 @@ export const getUser = async (req, res, next) => {
   }
 };
 
+export const getUserWithReviews = async (req, res, next) => {
+  try {
+    const user = await UserServices.getUserWithReviews(req.user.id);
+    res.status(HTTP.StatusCodes.OK).json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 export const getUserById = async (req, res, next) => {
   try {
     const user = await UserServices.getUser(req.params.userId);
