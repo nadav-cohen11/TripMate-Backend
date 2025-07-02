@@ -26,23 +26,25 @@ export const createTrip = async (tripData) => {
       return participant;
     });
     const trip = new Trip(tripData);
-    
-    if (!trip.aiGenerated) {
-      const { city, country } = tripData.destination;
-      const { travelStyle, travelDates, participants, tags = [] } = tripData;
 
-      const aiText = await getPlaceSuggestions(
-        city,
-        country,
-        travelStyle || 'balanced',
-        travelDates,
-        participants.length,
-        tags
-      );
+    try {
+      if (!trip.aiGenerated) {
+        const { city, country } = tripData.destination;
+        const { travelStyle, travelDates, participants, tags = [] } = tripData;
 
-      trip.ai = aiText;
-      trip.aiGenerated = true;
-    }
+        const aiText = await getPlaceSuggestions(
+          city,
+          country,
+          travelStyle || 'balanced',
+          travelDates,
+          participants.length,
+          tags
+        );
+
+        trip.ai = aiText;
+        trip.aiGenerated = true;
+      }
+    } catch (err) { }
 
     await trip.save();
     return trip;
@@ -68,13 +70,17 @@ const checkTripsConflicts = async (participantIds, start, end) => {
     if (
       (startDate <= tripEnd && endDate >= tripStart)
     ) {
-      const simplified = trip.participants.map(p => ({
-        _id: p.userId._id,
-        fullName: p.userId.fullName
+      const users = await Trip.db.model('User').find({
+        _id: { $in: participantIds }
+      }, { _id: 1, fullName: 1 });
+
+      const simplified = users.map(u => ({
+        _id: u._id,
+        fullName: u.fullName
       }));
-      
+
       const filtered = simplified.filter((p) => participantIds.map(id => id.toString()).includes(p._id.toString()))
-      
+
       return filtered
     }
   }
@@ -136,12 +142,12 @@ export const getTripSuggestion = async (tripId, retryCount = 0) => {
       apikey: process.env.OPENTRIPMAP_API_KEY,
     };
 
-      
+
     const response = await axios.get(url, { params });
 
     if (!response.data || !Array.isArray(response.data.features) || !response.data.features.length) {
       if (retryCount < 5) {
-        return await getTripSuggestion(tripId, retryCount + 1); 
+        return await getTripSuggestion(tripId, retryCount + 1);
       } else {
         throw new Error('No suggestions found after several retries');
       }

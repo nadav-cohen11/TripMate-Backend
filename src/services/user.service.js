@@ -6,6 +6,7 @@ import { isValidCoordinates } from '../utils/cordinatesValidator.js';
 import logger from '../config/logger.js';
 import nodemailer from 'nodemailer';
 import sgMail from '@sendgrid/mail';
+import mongoose from 'mongoose';
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -121,6 +122,112 @@ export const getUser = async (userId) => {
   }
 }
 
+export const getUserWithReviews = async (userId) => {
+  try {
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      throw createError(HTTP.StatusCodes.BAD_REQUEST, 'Invalid userId');
+    }
+
+    const userWithReviews = await User.aggregate([
+      { $match: { _id: new mongoose.Types.ObjectId(userId), isDeleted: false } },
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: '_id',
+          foreignField: 'revieweeId',
+          as: 'reviews',
+        },
+      },
+      {
+        $unwind: {
+          path: '$reviews',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'reviews.reviewerId',
+          foreignField: '_id',
+          as: 'reviews.reviewer',
+        },
+      },
+      {
+        $unwind: {
+          path: '$reviews.reviewer',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $group: {
+          _id: '$_id',
+          fullName: { $first: '$fullName' },
+          email: { $first: '$email' },
+          languages: { $first: '$languagesSpoken' },
+          birthDate: { $first: '$birthDate' },
+          gender: { $first: '$gender' },
+          location: { $first: '$location' },
+          travelPreferences: { $first: '$travelPreferences' },
+          adventureStyle: { $first: '$adventureStyle' },
+          bio: { $first: '$bio' },
+          photos: { $first: '$photos' },
+          profilePhotoId: { $first: '$profilePhotoId' },
+          reels: { $first: '$reels' },
+          socialLinks: { $first: '$socialLinks' },
+          reviews: {
+            $push: {
+              _id: '$reviews._id',
+              rating: '$reviews.rating',
+              comment: '$reviews.comment',
+              tripId: '$reviews.tripId',
+              createdAt: '$reviews.createdAt',
+              reviewer: {
+                _id: '$reviews.reviewer._id',
+                fullName: '$reviews.reviewer.fullName',
+                email: '$reviews.reviewer.email',
+                photos: '$reviews.reviewer.photos',
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          reviews: {
+            $cond: [
+              { $eq: [{ $size: { $filter: { input: '$reviews', as: 'review', cond: { $ne: ['$$review._id', null] } } } }, 0] },
+              null,
+              {
+                $filter: {
+                  input: '$reviews',
+                  as: 'review',
+                  cond: { $ne: ['$$review._id', null] },
+                },
+              }
+            ]
+          },
+        },
+      },
+      {
+        $project: {
+          password: 0,
+          isDeleted: 0,
+          createdAt: 0,
+          updatedAt: 0,
+        },
+      },
+    ]);
+
+    if (!userWithReviews.length) {
+      throw createError(HTTP.StatusCodes.NOT_FOUND, 'User not found');
+    }
+
+    return userWithReviews[0];
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getAllUsers = async () => {
   try {
     return await User.find({}).select('-password');
@@ -186,7 +293,7 @@ export const sendWelcomeEmail = async (email, name) => {
       <div style="font-family: Arial, sans-serif; background: #f6f8fa; padding: 40px;">
         <div style="max-width: 500px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 32px;">
           <div style="text-align: center;">
-            <img src="https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/v1750433782/TripMate_logo_x0hndn.png" alt="TripMate Logo" style="width: 150px; margin-bottom: 16px;" />
+            <img src="https://res.cloudinary.com/dfyhfo2os/image/upload/v1751449768/logo_k0jmjo.png" alt="TripMate Logo" style="width: 150px; margin-bottom: 16px;" />
             <h1 style="color: #2d7ff9; margin-bottom: 8px;">Welcome to TripMate, ${name}!</h1>
           </div>
           <p style="font-size: 16px; color: #333;">

@@ -8,31 +8,25 @@ import logger from '../config/logger.js';
 
 export const createOrAcceptMatch = async (user1Id, user2Id, compatibilityScore = 35) => {
   try {
-    const existingPendingMatch = await Match.findOne({
+    const existingMatch = await Match.findOne({
       $or: [
         { user1Id, user2Id },
         { user1Id: user2Id, user2Id: user1Id }
-      ],
-      status: 'pending',
+      ]
     });
 
-    if (existingPendingMatch) {
-      existingPendingMatch.status = 'accepted';
-      existingPendingMatch.matchedAt = new Date();
-      await existingPendingMatch.save();
+    if (existingMatch) {
+      if (existingMatch.status !== "pending") {
+        throw createError(HTTP.StatusCodes.CONFLICT, 'match already exist');
+      }
 
-      return await Match.create({
-        user1Id,
-        user2Id,
-        initiatedBy: user1Id,
-        status: 'accepted',
-        respondedAt: new Date(),
-        compatibilityScore,
-      });
+      existingMatch.status = 'accepted';
+      existingMatch.matchedAt = new Date();
+      await existingMatch.save();
+
+      return existingMatch;
     }
 
-    const existing = await Match.findOne({ user1Id, user2Id });
-    if (existing) throw createError(HTTP.StatusCodes.CONFLICT, 'match already exist');
     const match = await Match.create({
       user1Id,
       user2Id,
@@ -45,6 +39,7 @@ export const createOrAcceptMatch = async (user1Id, user2Id, compatibilityScore =
     throw error;
   }
 };
+
 
 export const acceptMatch = async (matchId) => {
   try {
@@ -318,11 +313,17 @@ export const getNonMatchedNearbyUsersWithReviews = async (userId, maxDistanceInM
       {
         $addFields: {
           reviews: {
-            $filter: {
-              input: '$reviews',
-              as: 'review',
-              cond: { $ne: ['$$review._id', null] },
-            },
+            $cond: [
+              { $eq: [ { $size: { $filter: { input: '$reviews', as: 'review', cond: { $ne: ['$$review._id', null] } } } }, 0 ] },
+              null,
+              {
+                $filter: {
+                  input: '$reviews',
+                  as: 'review',
+                  cond: { $ne: ['$$review._id', null] },
+                },
+              }
+            ]
           },
         },
       },
