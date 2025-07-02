@@ -15,13 +15,12 @@ export const AgeRangeSchema = new Schema({
 export const TravelPreferencesSchema = new Schema({
   destinations: [{ type: String, trim: true }],
   travelDates: TravelDatesSchema,
-  groupSize: { type: Number, min: 0, default: 0 },
+  groupSize: { type: Number, min: 0 },
   ageRange: AgeRangeSchema,
   interests: [{ type: String, trim: true, lowercase: true }],
   travelStyle: {
     type: String,
     enum: ['budget', 'luxury', 'adventure', 'cultural', 'nature', 'social'],
-    default: 'budget',
   },
 }, { _id: false });
 
@@ -55,7 +54,7 @@ export const ParticipantSchema = new Schema({
   joinedAt: { type: Date, default: Date.now },
 }, { _id: false });
 
-export const mediaSchema = new  Schema({
+export const mediaSchema = new Schema({
   url: { type: String, required: true },
   public_id: { type: String, required: true },
   type: { type: String, enum: ['image', 'video'], required: true },
