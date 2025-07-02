@@ -10,7 +10,7 @@ const validateTripData = (tripData) => {
 
 export const createTrip = async (tripData) => {
   try {
-    const { start, end } = tripData.travelDates
+    const { start, end } = tripData.travelDates;
     const participantIds = tripData.participants.map(p => p._id);
     const conflictsIds = await checkTripsConflicts(participantIds, start, end);
     if (conflictsIds) {
@@ -28,28 +28,10 @@ export const createTrip = async (tripData) => {
     tripData.aiGenerated = false;
     const trip = new Trip(tripData);
 
-    try {
-      if (!trip.aiGenerated) {
-        const { city, country } = tripData.destination;
-        const { travelStyle, travelDates, participants, tags = [] } = tripData;
-
-        const aiText = await getPlaceSuggestions(
-          city,
-          country,
-          travelStyle || 'balanced',
-          travelDates,
-          participants.length,
-          tags
-        );
-
-        trip.ai = aiText;
-        trip.aiGenerated = true;
-      }
-    } catch (err) { }
-
-
     await trip.save();
-    await enrichTripWithAI(trip._id, tripData);
+
+    enrichTripWithAI(trip._id, tripData).catch(() => {});
+
     return trip;
   } catch (error) {
     throw error;
