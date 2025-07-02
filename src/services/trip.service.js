@@ -25,26 +25,10 @@ export const createTrip = async (tripData) => {
       }
       return participant;
     });
+    tripData.aiGenerated = false;
     const trip = new Trip(tripData);
-    
-    if (!trip.aiGenerated) {
-      const { city, country } = tripData.destination;
-      const { travelStyle, travelDates, participants, tags = [] } = tripData;
-
-      const aiText = await getPlaceSuggestions(
-        city,
-        country,
-        travelStyle || 'balanced',
-        travelDates,
-        participants.length,
-        tags
-      );
-
-      trip.ai = aiText;
-      trip.aiGenerated = true;
-    }
-
     await trip.save();
+    await enrichTripWithAI(trip._id, tripData);
     return trip;
   } catch (error) {
     throw error;
@@ -242,6 +226,26 @@ export const fetchNearbyEvents = async (lat, lon, keyword) => {
   }
 };
 
+export const enrichTripWithAI = async (tripId, tripData) => {
+  try {
+    const { city, country } = tripData.destination;
+    const { travelStyle, travelDates, participants, tags = [] } = tripData;
+    const aiText = await getPlaceSuggestions(
+      city,
+      country,
+      travelStyle || 'balanced',
+      travelDates,
+      participants.length,
+      tags
+    );
+    const updated = await Trip.findByIdAndUpdate(tripId, {
+      ai: aiText,
+      aiGenerated: true,
+    }, { new: true });
+  } catch (error) {
+    throw error;
+  }
+};
 
 const shuffle = (array) => {
   for (let i = array.length - 1; i > 0; i--) {

@@ -357,8 +357,7 @@ export const uploadToInstagram = async(mediaUrl,caption) => {
 
     return resPublish.data;
   } catch (error) {
-    console.error('Instagram upload error:', error.response?.data || error.message || error);
-    throw error
+    throw error;
   }
 }
 

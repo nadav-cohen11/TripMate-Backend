@@ -8,20 +8,10 @@ export const createTrip = async (req, res, next) => {
   try {
     const tripData = req.body;
     const newTrip = await TripService.createTrip(tripData);
-
-    const { city, country } = tripData.destination;
-    const { travelStyle, travelDates, participants, tags } = tripData;
-    const itinerary = await getPlaceSuggestions(
-      city,
-      country,
-      travelStyle,
-      travelDates,
-      participants.length,
-      tags
-    );
-    newTrip.ai = itinerary;
-    await newTrip.save();
-    res.status(HTTP.StatusCodes.CREATED).json({ trip: newTrip });
+    TripService.enrichTripWithAI(newTrip._id, tripData).catch((err) => {
+      console.error('AI enrichment failed:', err);
+    });
+    res.status(HTTP.StatusCodes.CREATED).json({ trip: newTrip, aiStatus: 'pending' });
   } catch (error) {
     next(error);
   }
@@ -84,6 +74,27 @@ export const getNearbyEvents = async (req, res, next) => {
     res.status(HTTP.StatusCodes.OK).json(events);
   } catch (error) {
     next(error);
+  }
+};
+
+export const enrichTripWithAI = async (tripId, tripData) => {
+  try {
+    const { city, country } = tripData.destination;
+    const { travelStyle, travelDates, participants, tags = [] } = tripData;
+    const aiText = await getPlaceSuggestions(
+      city,
+      country,
+      travelStyle || 'balanced',
+      travelDates,
+      participants.length,
+      tags
+    );
+    await TripService.updateTrip(tripId, {
+      ai: aiText,
+      aiGenerated: true,
+    });
+  } catch (error) {
+    throw error;
   }
 };
 

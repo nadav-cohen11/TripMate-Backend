@@ -342,7 +342,6 @@ export const getNonMatchedNearbyUsersWithReviews = async (userId, maxDistanceInM
 
     return nearbyUsers;
   } catch (error) {
-    console.error('Error in getNonMatchedNearbyUsersWithReviews:', error);
     throw createError(
       error.statusCode || HTTP.StatusCodes.INTERNAL_SERVER_ERROR,
       error.message || 'Failed to get nearby users with reviews'

@@ -1,7 +1,7 @@
-import axios from 'axios';
+import { InferenceClient } from "@huggingface/inference";
+import axios from "axios";
 
-const HF_API_KEY = process.env.HF_API_KEY;
-const HF_API_URL = 'https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta';
+const client = new InferenceClient(process.env.HF_API_KEY);
 
 export const getPlaceSuggestions = async (
   city,
@@ -15,53 +15,47 @@ export const getPlaceSuggestions = async (
   const tagString = tags.length ? tags.join(', ') : 'general interest';
 
   const prompt = `
-You are a professional travel planner assistant.
+You are an expert travel planner assistant helping a group of ${groupSize || '3-5'} people plan a memorable trip to ${city}, ${country} for ${days} days.
 
-Your task is to create a day-by-day travel itinerary for a group of ${groupSize || '3-5'} people visiting ${city}, ${country} for ${days} days. 
+Your mission:
+- Design a unique, day-by-day itinerary tailored to a ${travelStyle} experience, focusing on: ${tagString}.
+- Each day should feature a distinct theme or highlight (e.g., culture, nature, local cuisine, hidden gems, adventure, relaxation).
+- Prioritize authentic local experiences, lesser-known spots, and practical travel tips over typical tourist attractions.
+- Include a mix of activities (morning, afternoon, evening) when possible.
+- For each day, provide:
+  Day X: [Catchy Title for the Day or Main Activity]
+  Description: A vivid, engaging summary of what to expect, including why it's special or recommended.
+  Link: A clickable Google search or official website for more information.
+  Pro Tip: (Optional) A local tip, best time to visit, or insider advice.
 
-The group is interested in a ${travelStyle} experience, with preferences for: ${tagString}.
+Formatting:
+- Use clear headings for each day.
+- Keep the tone friendly, enthusiastic, and informative.
+- Avoid generic recommendations; be creative and specific.
 
-Please output the itinerary in the following format:
-
-Day X: [Title of Place or Activity]  
-Description: A short, vivid description of the activity/place.  
-Link: A clickable Google search or official site URL for more information.
-
-Ensure each day is unique and balanced (e.g. a mix of culture, nature, local spots, food, etc). Prefer hidden gems and local insights over tourist traps when possible.  
-The tone should be friendly and informative.
-
-Begin now.
+Begin the itinerary below:
 `;
 
   try {
-    const { data } = await axios.post(
-      HF_API_URL,
-      {
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 800,
-          temperature: 0.8,
+    const chatCompletion = await client.chatCompletion({
+      provider: "featherless-ai",
+      model: "HuggingFaceH4/zephyr-7b-beta",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
         },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${HF_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+      ],
+    });
 
-    const raw = data?.[0]?.generated_text || '';
+    const raw = chatCompletion.choices[0].message.content || '';
     const itineraryStart = raw.indexOf('Day 1:');
     const itinerary = itineraryStart !== -1 ? raw.slice(itineraryStart).trim() : 'No itinerary available.';
-    
     return itinerary;
-
   } catch (error) {
     throw new Error('Failed to fetch itinerary from Hugging Face');
   }
 };
-
 
 function getDayCount(start, end) {
   const startDate = new Date(start);
